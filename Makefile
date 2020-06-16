@@ -1,37 +1,35 @@
 CC=gcc
-RM=rm -rf
 
-CFLAGS=-c -Wall -Wextra -Wpedantic -Werror -Wshadow
-LDFLAGS=
+RM=rm -rf
+INSTALL=install
+MKDIR=mkdir -p
+
+CVER=-ansi
+COPT=-O2
+CMES=-Wall -Wextra -Wpedantic -Wshadow
+
+CFLAGS=$(CVER) $(COPT) $(CMES)
 
 SRCDIR=./src
-OBJDIR=./obj
 BINDIR=./bin
 BINNAME=ginec
 BINPATH=$(BINDIR)/$(BINNAME)
+INSTALLPATH=/usr/local/bin
 
 SOURCES=$(wildcard $(SRCDIR)/*.c)
-TEMP=$(SOURCES:.c=.o)
-OBJECTS=$(TEMP:$(SRCDIR)%=$(OBJDIR)%)
 
-build: $(BINNAME)
+build:
+	$(MKDIR) $(BINDIR)
+	$(CC) $(CFLAGS) $(SOURCES) -o $(BINPATH)
 
 run:
 	$(BINPATH)
 
 clear:
-	$(RM) $(OBJDIR) $(BINDIR)
+	$(RM) $(BINDIR)
 
 install:
-	install $(BINPATH) /usr/local/bin
+	$(INSTALL) $(BINPATH) $(INSTALLPATH)
 
 uninstall:
-	rm -f /usr/local/bin/$(BINNAME)
-
-$(BINNAME): $(OBJECTS)
-	mkdir -p $(BINDIR)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $(BINPATH)
-
-$(OBJECTS): $(SOURCES)
-	mkdir -p $(OBJDIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(RM) $(INSTALLPATH)/$(BINNAME)
