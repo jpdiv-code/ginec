@@ -1,6 +1,6 @@
 #include "cartridge.h"
 
-cartridge_t cartridge_new(uint8_t* memory) {
+cartridge_t cartridge_new(uint32_t* memory) {
     cartridge_t cartridge = { NULL };
     cartridge.memory = memory;
     return cartridge;
