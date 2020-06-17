@@ -64,8 +64,8 @@ int main() {
     o_uint32_tp memory;
     printf("Hello, ginec!\n");
     memory = load("game.gc");
-    memory.error->base = error_new_unknown();
     if (memory.error != NULL) {
+        memory.error->base = error_new_unknown();
         crash(memory.error);
     }
     c = cartridge_new(memory.value);
