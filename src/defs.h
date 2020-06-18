@@ -1,5 +1,5 @@
 #pragma once
 
-#include "error.h"
+#include "err.h"
 
-#define OPTIONAL(type) struct { type value; error_t* error }
+#define OPTIONAL(type) struct { type value; err_t* err }
