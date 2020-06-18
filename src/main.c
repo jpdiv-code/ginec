@@ -4,57 +4,51 @@
 #include <stdbool.h>
 
 #include "defs.h"
-#include "errors.h"
+#include "err.h"
 #include "cartridge.h"
 
 typedef OPTIONAL(uint32_t*) o_uint32_tp;
 
-o_uint32_tp load(const char* filename) {
+o_uint32_tp load(const char* fname) {
     FILE* file;
     long filelen;
     uint32_t* buffer;
-    file = fopen(filename, "rb");
+    const char* modes = "rb";
+    file = fopen(fname, modes);
     if (file == NULL) {
-        return (o_uint32_tp) { 0, error_new_unknown() };
+        return (o_uint32_tp) { 0, err_new_open_file(fname, modes, NULL) };
     }
     if (fseek(file, 0, SEEK_END) != 0) {
-        return (o_uint32_tp) { 0, error_new_unknown() };
+        return (o_uint32_tp) { 0,
+            err_new_working_with_file(fname, modes, L"couldn't go to the end of the file", NULL) };
     }
     filelen = ftell(file);
     if (filelen == -1L) {
-        return (o_uint32_tp) { 0, error_new_unknown() };
+        return (o_uint32_tp) { 0,
+            err_new_working_with_file(fname, modes, L"couldn't get the length of the file", NULL) };
     }
     rewind(file);
-    buffer = (uint32_t*)malloc(filelen * sizeof(uint32_t));
+    size_t buffer_size = filelen * sizeof(uint32_t);
+    buffer = (uint32_t*)malloc(buffer_size);
     if (buffer == NULL) {
-        return (o_uint32_tp) { 0, error_new_unknown() };
+        return (o_uint32_tp) { 0,
+            err_new_working_with_file(fname, modes, L"failed to allocate buffer",
+                err_new_memory_allocation(buffer_size, NULL)) };
     }
     if (fread(buffer, filelen, 1, file) != 1) {
-        return (o_uint32_tp) { 0, error_new_unknown() };
+        return (o_uint32_tp) { 0,
+            err_new_working_with_file(fname, modes, L"failed to read the file into the buffer", NULL) };
     }
     if (fclose(file) != 0) {
-        return (o_uint32_tp) { 0, error_new_unknown() };
+        return (o_uint32_tp) { 0, err_new_close_file(fname, modes, NULL) };
     }
     return (o_uint32_tp) { buffer, NULL };
 }
 
 /*
-uint32_t* load(const char* filename) {
-    CATCH(file == NULL,
-        "Couldn't open \"%s\" file\n", filename);
-    CATCH(fseek(file, 0, SEEK_END) != 0,
-        "Error of opening \"%s\" file: couldn't go to the end of the file\n", filename);
-    filelen = ftell(file);
-    CATCH(filelen == -1L,
-        "Error working with \"%s\" file: couldn't get the length of the file\n", filename);
-    rewind(file);
-    buffer = (uint8_t*)malloc(filelen * sizeof(uint8_t));
-    CATCH(buffer == NULL,
-        "Error working with \"%s\" file: failed to allocate %ld bytes of ram\n", filename, filelen);
-    CATCH(fread(buffer, filelen, 1, file) != 1,
-        "Error working with \"%s\" file: failed to buffer the data from the file\n", filename);
+uint32_t* load(const char* fname) {
     CATCH(fclose(file) != 0,
-        "Error working with \"%s\" file: failed to close it\n", filename);
+        "Error working with \"%s\" file: failed to close it\n", fname);
     return buffer;
 }
 */
@@ -64,9 +58,8 @@ int main() {
     o_uint32_tp memory;
     printf("Hello, ginec!\n");
     memory = load("game.gc");
-    if (memory.error != NULL) {
-        memory.error->base = error_new_unknown();
-        crash(memory.error);
+    if (memory.err != NULL) {
+        crash(memory.err);
     }
     c = cartridge_new(memory.value);
     cartridge_free(c);
