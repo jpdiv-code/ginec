@@ -8,6 +8,7 @@
 #include <stdarg.h>
 
 #include "err_ctx.h"
+#include "cli.h"
 
 const uint32_t INDENT_SIZE = 2;
 const uint32_t ERR_MAX_FILENAME_LENGTH = 256;
@@ -71,23 +72,33 @@ err_t* err_new_close_file(const char* fname, const char* modes, err_t* base) {
     );
 }
 
-void err_print(err_t* err, uint32_t indent_count) {
-    uint32_t indent_len = indent_count * INDENT_SIZE + 1;
-    wchar_t indent_str[indent_len];
-    uint32_t i;
-    for (i = 0; i < indent_len; i++) {
-        indent_str[i] = L' ';
-    }
-    indent_str[indent_len - 1] = L'\0';
-    fwprintf(stderr,
-        L"%SError(%d): %S\n", indent_str, err->type, err->msg);
-    if (err->base != NULL) {
-        err_print(err->base, indent_count + 1);
-    }
+wchar_t* err_to_str(err_t* err) {
+    uint32_t errs = 0, str_len = 0, offset = 0, msg_len;
+    err_t* cur_err = err;
+    wchar_t* str;
+    wchar_t* msg;
+    do {
+        errs++;
+        str_len += wcslen(cur_err->msg);
+        cur_err = cur_err->base;
+    } while (cur_err != NULL);
+    str_len += (errs - 1) * 2 + 2;
+    str = (wchar_t*)malloc(str_len * sizeof(wchar_t));
+    cur_err = err;
+    do {
+        str[offset++] = L'\t';
+        msg = cur_err->msg;
+        msg_len = wcslen(msg);
+        memcpy(&str[offset], msg, msg_len * sizeof(wchar_t));
+        offset += msg_len;
+        cur_err = cur_err->base;
+        str[offset++] = L'\n';
+    } while (cur_err != NULL);
+    str[offset] = L'\0';
+    return str;
 }
 
 void crash(err_t* err) {
-    fwprintf(stderr, L"Crash!\n");
-    err_print(err, 1);
+    cli_crash(err);
     exit(1);
 }

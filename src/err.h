@@ -26,5 +26,5 @@ err_t* err_new_open_file(const char* fname, const char* modes, err_t* base);
 err_t* err_new_working_with_file(const char* fname, const char* modes, const wchar_t* info, err_t* base);
 err_t* err_new_close_file(const char* fname, const char* modes, err_t* base);
 
-void err_print(err_t* err, uint32_t indent_size);
+wchar_t* err_to_str(err_t* err);
 void crash(err_t* err);
