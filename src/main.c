@@ -5,7 +5,6 @@
 
 #include "defs.h"
 #include "err.h"
-#include "cartridge.h"
 
 typedef OPTIONAL(uint32_t*) o_uint32_tp;
 
@@ -45,24 +44,13 @@ o_uint32_tp load(const char* fname) {
     return (o_uint32_tp) { buffer, NULL };
 }
 
-/*
-uint32_t* load(const char* fname) {
-    CATCH(fclose(file) != 0,
-        "Error working with \"%s\" file: failed to close it\n", fname);
-    return buffer;
-}
-*/
-
 int main() {
-    cartridge_t c;
     o_uint32_tp memory;
     printf("Hello, ginec!\n");
     memory = load("game.gc");
     if (memory.err != NULL) {
         crash(memory.err);
     }
-    c = cartridge_new(memory.value);
-    cartridge_free(c);
     printf("Goodbuy, ginec!\n");
     return 0;
 }
