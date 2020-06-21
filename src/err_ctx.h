@@ -2,25 +2,33 @@
 
 #include <stdlib.h>
 
+typedef enum ENUM_ERR_FILE_T {
+    ERR_FILE_T_GENERAL      =   0,
+    ERR_FILE_T_NOT_EXISTS   =   1,
+    ERR_FILE_T_CANT_OPEN    =   2,
+    ERR_FILE_T_CANT_READ    =   3,
+    ERR_FILE_T_EMPTY        =   4,
+    ERR_FILE_T_CANT_CLOSE   =   5,
+} ENUM_ERR_FILE_T;
+
 typedef union err_ctx_t {
     struct {
-        size_t size;
-    } memory_allocation;
+        size_t  size;
+    } malloc;
+
     struct {
-        const char* fname;
-        const char* modes;
-    } open_file;
-    struct {
-        const char* fname;
-        const char* modes;
-    } working_with_file;
-    struct {
-        const char* fname;
-        const char* modes;
-    } close_file;
+        ENUM_ERR_FILE_T type;
+        const char*     fname;
+        const char*     modes;
+    } file;
 } err_ctx_t;
 
-err_ctx_t err_ctx_new_memory_allocation(size_t size);
-err_ctx_t err_ctx_new_open_file(const char* fname, const char* modes);
-err_ctx_t err_ctx_new_working_with_file(const char* fname, const char* modes);
-err_ctx_t err_ctx_new_close_file(const char* fname, const char* modes);
+err_ctx_t err_ctx_new_malloc(
+    size_t  size
+);
+
+err_ctx_t err_ctx_new_file(
+    ENUM_ERR_FILE_T type,
+    const char*     fname,
+    const char*     modes
+);
