@@ -114,6 +114,16 @@ err_t* err_new_file(
     return err;
 }
 
+void err_free(
+    err_t*  err
+) {
+    free(err->msg);
+    if (err->base != NULL) {
+        err_free(err->base);
+    }
+    free(err);
+}
+
 wchar_t* err_to_str(
     err_t*  err
 ) {

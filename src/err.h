@@ -37,6 +37,10 @@ err_t* err_new_file(
     err_t*          base
 );
 
+void err_free(
+    err_t*  err
+);
+
 wchar_t* err_to_str(
     err_t*  err
 );
