@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 
+#include "cartridge.h"
+
 typedef enum ENUM_ERR_FILE_T {
     ERR_FILE_T_GENERAL      =   0,
     ERR_FILE_T_NOT_EXISTS   =   1,
