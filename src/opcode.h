@@ -109,4 +109,7 @@ typedef enum ENUM_OPC {
     OPC_SHR_PP_P        =   174,
     OPC_SHR_PP_PP       =   175,
 
+    OPC_HLT_V           =   180,
+    OPC_HLT_P           =   181,
+    OPC_HLT_PP          =   182,
 } ENUM_OPC;
