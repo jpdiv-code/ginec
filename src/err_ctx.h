@@ -20,6 +20,17 @@ typedef union err_ctx_t {
         const char*     fname;
         const char*     modes;
     } file;
+
+    struct {
+        cartridge_t cartridge;
+        uint32_t    ip;
+    } runtime;
+
+    struct {
+        cartridge_t cartridge;
+        int32_t     opc;
+        uint32_t    ip;
+    } unknown_opc;
 } err_ctx_t;
 
 err_ctx_t err_ctx_new_malloc(
@@ -30,4 +41,15 @@ err_ctx_t err_ctx_new_file(
     ENUM_ERR_FILE_T type,
     const char*     fname,
     const char*     modes
+);
+
+err_ctx_t err_ctx_new_runtime(
+    cartridge_t cartridge,
+    uint32_t    ip
+);
+
+err_ctx_t err_ctx_new_unknown_opc(
+    cartridge_t cartridge,
+    int32_t     opc,
+    uint32_t    ip
 );

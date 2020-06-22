@@ -9,6 +9,7 @@
 
 #include "err_ctx.h"
 #include "cli.h"
+#include "cartridge.h"
 
 const uint32_t ERR_MAX_MSG_LENGTH = 512;
 const uint32_t ERR_MAX_FILENAME_LENGTH = 256;
@@ -108,6 +109,61 @@ err_t* err_new_file(
     err = err_new_base(
         ERR_T_FILE, msg,
         err_ctx_new_file(type, fname, modes),
+        base
+    );
+
+    return err;
+}
+
+err_t* err_new_runtime(
+    const wchar_t*  info,
+    cartridge_t     cartridge,
+    uint32_t        ip,
+    err_t*          base
+) {
+    wchar_t* msg;
+    err_t* err;
+
+    if (info == NULL) {
+        msg = err_msg_new(ERR_MAX_MSG_LENGTH,
+            L"Runtime error at %zu", ip
+        );
+    } else {
+        msg = err_msg_new(ERR_MAX_MSG_LENGTH,
+            L"Runtime error at %zu: %S", ip, info
+        );
+    }
+    err = err_new_base(
+        ERR_T_FILE, msg,
+        err_ctx_new_runtime(cartridge, ip),
+        base
+    );
+
+    return err;
+}
+
+err_t* err_new_unknown_opcode(
+    const wchar_t*  info,
+    cartridge_t     cartridge,
+    int32_t         opc,
+    uint32_t        ip,
+    err_t*          base
+) {
+    wchar_t* msg;
+    err_t* err;
+
+    if (info == NULL) {
+        msg = err_msg_new(ERR_MAX_MSG_LENGTH,
+            L"Unknown opcode %d at %zu", opc, ip
+        );
+    } else {
+        msg = err_msg_new(ERR_MAX_MSG_LENGTH,
+            L"Unknown opcode %d at %zu: %S", opc, ip, info
+        );
+    }
+    err = err_new_base(
+        ERR_T_FILE, msg,
+        err_ctx_new_unknown_opc(cartridge, opc, ip),
         base
     );
 
