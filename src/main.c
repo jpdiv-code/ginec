@@ -14,14 +14,12 @@
     }
 #else
     int main() {
-        o_int32_tp mem;
+        o_cartridge_t cartridge;
 
-        printf("Hello, ginec!\n");
-        mem = fs_load_int32_buffer("game.gc");
-        if (mem.err != NULL) {
-            crash(mem.err);
+        cartridge = fs_load_cartridge("game.gc");
+        if (cartridge.err != NULL) {
+            crash(cartridge.err);
         }
-        printf("Goodbuy, ginec!\n");
 
         return 0;
     }

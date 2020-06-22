@@ -4,6 +4,6 @@
 
 #include "defs.h"
 
-o_int32_tp fs_load_int32_buffer(
+o_cartridge_t fs_load_cartridge(
     const char* fname
 );

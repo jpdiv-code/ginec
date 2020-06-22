@@ -5,8 +5,9 @@
 #include <stdint.h>
 
 #include "defs.h"
+#include "cartridge.h"
 
-o_int32_tp fs_load_int32_buffer(
+o_cartridge_t fs_load_cartridge(
     const char* fname
 ) {
     FILE* file;
@@ -14,7 +15,7 @@ o_int32_tp fs_load_int32_buffer(
     size_t buffer_size;
     int32_t* buffer;
     const char* modes = "rb";
-    o_int32_tp result;
+    o_cartridge_t result;
 
     file = fopen(fname, modes);
     if (file != NULL) {
@@ -28,7 +29,7 @@ o_int32_tp fs_load_int32_buffer(
                     if (buffer != NULL) {
                         if (fread(buffer, filelen, 1, file) == 1) {
                             if (fclose(file) == 0) {
-                                result.value = buffer;
+                                result.value = cartridge_new(filelen, buffer);
                                 result.err = NULL;
                             } else {
                                 result.err = err_new_file(
