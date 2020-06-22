@@ -34,8 +34,8 @@
 | 54  | jlz   | a,b    | if [[a]]<0 [0]=[b]                             |
 | 55  | jlz   | a,b    | if [[a]]<0 [0]=[[b]]                           |
 |     |       |        |                                                |
-| 60  | sys   | a,b    | syscall[a]([b])                                |
-| 61  | sys   | a,b    | syscall[a]([[b]])                              |
+| 60  | sys   | a,b    | syscall\[a\]([b])                              |
+| 61  | sys   | a,b    | syscall\[a\]([[b]])                            |
 |     |       |        |                                                |
 | 70  | neg   | a      | [a]=-[a]                                       |
 | 71  | neg   | a      | [[a]]=-[[a]]                                   |
