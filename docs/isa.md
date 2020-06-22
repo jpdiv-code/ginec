@@ -51,41 +51,59 @@
 |     |       |        |                                                |
 | 110 | add   | a,b    | [a]=[a]+b                                      |
 | 111 | add   | a,b    | [a]=[a]+[b]                                    |
-| 112 | add   | a,b    | [[a]]=[[a]]+b                                  |
-| 113 | add   | a,b    | [[a]]=[[a]]+[b]                                |
-| 114 | add   | a,b,o  | [a]=[a]+b; if io [o] = 1 el [o] = 0            |
-| 115 | add   | a,b,o  | [a]=[a]+[b]; if io [o] = 1 el [o] = 0          |
-| 116 | add   | a,b,o  | [[a]]=[[a]]+b; if io [o] = 1 el [o] = 0        |
-| 117 | add   | a,b,o  | [[a]]=[[a]]+[b]; if io [o] = 1 el [o] = 0      |
-| 118 | add   | a,b,o  | [a]=[a]+b; if io [[o]] = 1 el [[o]] = 0        |
-| 119 | add   | a,b,o  | [a]=[a]+[b]; if io [[o]] = 1 el [[o]] = 0      |
-| 120 | add   | a,b,o  | [[a]]=[[a]]+b; if io [[o]] = 1 el [[o]] = 0    |
-| 121 | add   | a,b,o  | [[a]]=[[a]]+[b]; if io [[o]] = 1 el [[o]] = 0  |
+| 112 | add   | a,b    | [a]=[a]+[[b]]                                  |
+| 113 | add   | a,b    | [[a]]=[[a]]+b                                  |
+| 114 | add   | a,b    | [[a]]=[[a]]+[b]                                |
+| 115 | add   | a,b    | [[a]]=[[a]]+[[b]]                              |
+| 116 | add   | a,b,o  | [a]=[a]+b; if io [o] = 1 el [o] = 0            |
+| 117 | add   | a,b,o  | [a]=[a]+[b]; if io [o] = 1 el [o] = 0          |
+| 118 | add   | a,b,o  | [a]=[a]+[[b]]; if io [o] = 1 el [o] = 0        |
+| 119 | add   | a,b,o  | [[a]]=[[a]]+b; if io [o] = 1 el [o] = 0        |
+| 120 | add   | a,b,o  | [[a]]=[[a]]+[b]; if io [o] = 1 el [o] = 0      |
+| 121 | add   | a,b,o  | [[a]]=[[a]]+[[b]]; if io [o] = 1 el [o] = 0    |
+| 122 | add   | a,b,o  | [a]=[a]+b; if io [[o]] = 1 el [[o]] = 0        |
+| 123 | add   | a,b,o  | [a]=[a]+[b]; if io [[o]] = 1 el [[o]] = 0      |
+| 124 | add   | a,b,o  | [a]=[a]+[[b]]; if io [[o]] = 1 el [[o]] = 0    |
+| 125 | add   | a,b,o  | [[a]]=[[a]]+b; if io [[o]] = 1 el [[o]] = 0    |
+| 126 | add   | a,b,o  | [[a]]=[[a]]+[b]; if io [[o]] = 1 el [[o]] = 0  |
+| 127 | add   | a,b,o  | [[a]]=[[a]]+[[b]]; if io [[o]] = 1 el [[o]] = 0|
 |     |       |        |                                                |
 | 130 | div   | a,b    | [a]=[a] div b                                  |
 | 131 | div   | a,b    | [a]=[a] div [b]                                |
-| 132 | div   | a,b    | [[a]]=[[a]] div b                              |
-| 133 | div   | a,b    | [[a]]=[[a]] div [b]                            |
-| 134 | div   | a,b,m  | [a]=[a] div b; [m]=[a] mod b                   |
-| 135 | div   | a,b,m  | [a]=[a] div [b]; [m]=[a] mod b                 |
-| 136 | div   | a,b,m  | [[a]]=[[a]] div b; [m]=[[a]] mod b             |
-| 137 | div   | a,b,m  | [[a]]=[[a]] div [b]; [m]=[[a]] mod b           |
-| 138 | div   | a,b,m  | [a]=[a] div b; [[m]]=[a] mod b                 |
-| 139 | div   | a,b,m  | [a]=[a] div [b]; [[m]]=[a] mod b               |
-| 140 | div   | a,b,m  | [[a]]=[[a]] div b; [[m]]=[[a]] mod b           |
-| 141 | div   | a,b,m  | [[a]]=[[a]] div [b]; [[m]]=[[a]] mod b         |
+| 132 | div   | a,b    | [a]=[a] div [[b]]                              |
+| 133 | div   | a,b    | [[a]]=[[a]] div b                              |
+| 134 | div   | a,b    | [[a]]=[[a]] div [b]                            |
+| 135 | div   | a,b    | [[a]]=[[a]] div [[b]]                          |
+| 136 | div   | a,b,m  | [a]=[a] div b; [m]=[a] mod b                   |
+| 137 | div   | a,b,m  | [a]=[a] div [b]; [m]=[a] mod b                 |
+| 138 | div   | a,b,m  | [a]=[a] div [[b]]; [m]=[a] mod b               |
+| 139 | div   | a,b,m  | [[a]]=[[a]] div b; [m]=[[a]] mod b             |
+| 140 | div   | a,b,m  | [[a]]=[[a]] div [b]; [m]=[[a]] mod b           |
+| 141 | div   | a,b,m  | [[a]]=[[a]] div [[b]]; [m]=[[a]] mod b         |
+| 142 | div   | a,b,m  | [a]=[a] div b; [[m]]=[a] mod b                 |
+| 143 | div   | a,b,m  | [a]=[a] div [b]; [[m]]=[a] mod b               |
+| 144 | div   | a,b,m  | [a]=[a] div [[b]]; [[m]]=[a] mod b             |
+| 145 | div   | a,b,m  | [[a]]=[[a]] div b; [[m]]=[[a]] mod b           |
+| 146 | div   | a,b,m  | [[a]]=[[a]] div [b]; [[m]]=[[a]] mod b         |
+| 147 | div   | a,b,m  | [[a]]=[[a]] div [[b]]; [[m]]=[[a]] mod b       |
 |     |       |        |                                                |
 | 150 | mul   | a,b    | [a]=[a]*b                                      |
 | 151 | mul   | a,b    | [a]=[a]*[b]                                    |
-| 152 | mul   | a,b    | [[a]]=[[a]]*b                                  |
-| 153 | mul   | a,b    | [[a]]=[[a]]*[b]                                |
+| 152 | mul   | a,b    | [a]=[a]*[[b]]                                  |
+| 153 | mul   | a,b    | [[a]]=[[a]]*b                                  |
+| 154 | mul   | a,b    | [[a]]=[[a]]*[b]                                |
+| 155 | mul   | a,b    | [[a]]=[[a]]*[[b]]                              |
 |     |       |        |                                                |
 | 160 | shl   | a,b    | [a]=[a]<<b                                     |
 | 161 | shl   | a,b    | [a]=[a]<<[b]                                   |
-| 162 | shl   | a,b    | [[a]]=[[a]]<<b                                 |
-| 163 | shl   | a,b    | [[a]]=[[a]]<<[b]                               |
+| 162 | shl   | a,b    | [a]=[a]<<[[b]]                                 |
+| 163 | shl   | a,b    | [[a]]=[[a]]<<b                                 |
+| 164 | shl   | a,b    | [[a]]=[[a]]<<[b]                               |
+| 165 | shl   | a,b    | [[a]]=[[a]]<<[[b]]                             |
 |     |       |        |                                                |
 | 170 | shr   | a,b    | [a]=[a]>>b                                     |
 | 171 | shr   | a,b    | [a]=[a]>>[b]                                   |
-| 172 | shr   | a,b    | [[a]]=[[a]]>>b                                 |
-| 173 | shr   | a,b    | [[a]]=[[a]]>>[b]                               |
+| 172 | shr   | a,b    | [a]=[a]>>[[b]]                                 |
+| 173 | shr   | a,b    | [[a]]=[[a]]>>b                                 |
+| 174 | shr   | a,b    | [[a]]=[[a]]>>[b]                               |
+| 175 | shr   | a,b    | [[a]]=[[a]]>>[[b]]                             |
