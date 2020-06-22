@@ -28,12 +28,12 @@ typedef enum ENUM_OPC {
     OPC_JGZ_PP_P        =   44,
     OPC_JGZ_PP_PP       =   45,
 
-    OPC_JGZ_P_V         =   50,
-    OPC_JGZ_P_P         =   51,
-    OPC_JGZ_P_PP        =   52,
-    OPC_JGZ_PP_V        =   53,
-    OPC_JGZ_PP_P        =   54,
-    OPC_JGZ_PP_PP       =   55,
+    OPC_JLZ_P_V         =   50,
+    OPC_JLZ_P_P         =   51,
+    OPC_JLZ_P_PP        =   52,
+    OPC_JLZ_PP_V        =   53,
+    OPC_JLZ_PP_P        =   54,
+    OPC_JLZ_PP_PP       =   55,
 
     OPC_SYS_P           =   60,
     OPC_SYS_PP          =   61,
