@@ -14,12 +14,12 @@
     }
 #else
     int main() {
-        o_int32_tp memory;
+        o_int32_tp mem;
 
         printf("Hello, ginec!\n");
-        memory = fs_load_int32_buffer("game.gc");
-        if (memory.err != NULL) {
-            crash(memory.err);
+        mem = fs_load_int32_buffer("game.gc");
+        if (mem.err != NULL) {
+            crash(mem.err);
         }
         printf("Goodbuy, ginec!\n");
 
