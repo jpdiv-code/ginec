@@ -6,15 +6,15 @@
 
 #include "defs.h"
 
-o_uint32_tp fs_load_uint32_buffer(
+o_int32_tp fs_load_int32_buffer(
     const char* fname
 ) {
     FILE* file;
     long filelen;
     size_t buffer_size;
-    uint32_t* buffer;
+    int32_t* buffer;
     const char* modes = "rb";
-    o_uint32_tp result;
+    o_int32_tp result;
 
     file = fopen(fname, modes);
     if (file != NULL) {
@@ -23,8 +23,8 @@ o_uint32_tp fs_load_uint32_buffer(
             if (filelen != -1L) {
                 if (filelen != 0) {
                     rewind(file);
-                    buffer_size = filelen * sizeof(uint32_t);
-                    buffer = (uint32_t*)malloc(buffer_size);
+                    buffer_size = filelen * sizeof(int32_t);
+                    buffer = (int32_t*)malloc(buffer_size);
                     if (buffer != NULL) {
                         if (fread(buffer, filelen, 1, file) == 1) {
                             if (fclose(file) == 0) {
