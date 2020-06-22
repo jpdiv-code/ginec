@@ -6,6 +6,10 @@
 #include "defs.h"
 #include "err.h"
 
+#if TEST
+    #include "../test/test.h"
+#endif
+
 typedef OPTIONAL(uint32_t*) o_uint32_tp;
 
 o_uint32_tp load(
@@ -73,15 +77,21 @@ o_uint32_tp load(
     return result;
 }
 
-int main() {
-    o_uint32_tp memory;
-
-    printf("Hello, ginec!\n");
-    memory = load("game.gc");
-    if (memory.err != NULL) {
-        crash(memory.err);
+#if TEST
+    int main() {
+        test();
     }
-    printf("Goodbuy, ginec!\n");
+#else
+    int main() {
+        o_uint32_tp memory;
 
-    return 0;
-}
+        printf("Hello, ginec!\n");
+        memory = load("game.gc");
+        if (memory.err != NULL) {
+            crash(memory.err);
+        }
+        printf("Goodbuy, ginec!\n");
+
+        return 0;
+    }
+#endif
