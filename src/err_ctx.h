@@ -5,10 +5,9 @@
 typedef enum ENUM_ERR_FILE_T {
     ERR_FILE_T_GENERAL      =   0,
     ERR_FILE_T_NOT_EXISTS   =   1,
-    ERR_FILE_T_CANT_OPEN    =   2,
-    ERR_FILE_T_CANT_READ    =   3,
-    ERR_FILE_T_EMPTY        =   4,
-    ERR_FILE_T_CANT_CLOSE   =   5,
+    ERR_FILE_T_CANT_READ    =   2,
+    ERR_FILE_T_EMPTY        =   3,
+    ERR_FILE_T_CANT_CLOSE   =   4,
 } ENUM_ERR_FILE_T;
 
 typedef union err_ctx_t {

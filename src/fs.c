@@ -65,8 +65,8 @@ o_cartridge_t fs_load_cartridge(
         }
     } else {
         result.err = err_new_file(
-            L"couldn't open the file",
-            ERR_FILE_T_CANT_OPEN, fname, modes, NULL);
+            L"file does not exist",
+            ERR_FILE_T_NOT_EXISTS, fname, modes, NULL);
     }
 
     return result;
