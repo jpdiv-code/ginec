@@ -33,6 +33,12 @@ typedef union err_ctx_t {
         int32_t     opc;
         uint32_t    ip;
     } unknown_opc;
+
+    struct {
+        cartridge_t cartridge;
+        int32_t     opc;
+        uint32_t    ip;
+    } segfault;
 } err_ctx_t;
 
 err_ctx_t err_ctx_new_malloc(
@@ -55,3 +61,10 @@ err_ctx_t err_ctx_new_unknown_opc(
     int32_t     opc,
     uint32_t    ip
 );
+
+err_ctx_t err_ctx_new_segfault(
+    cartridge_t cartridge,
+    int32_t     opc,
+    uint32_t    ip
+);
+

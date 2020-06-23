@@ -12,6 +12,7 @@ typedef enum ENUM_ERR_T {
     ERR_T_FILE          =   2,
     ERR_T_RUNTIME       =   3,
     ERR_T_UNKNOWN_OPC   =   4,
+    ERR_T_SEGFAULT      =   5,
 } ENUM_ERR_T;
 
 typedef struct err_t {
@@ -48,6 +49,14 @@ err_t* err_new_runtime(
 );
 
 err_t* err_new_unknown_opcode(
+    const wchar_t*  info,
+    cartridge_t     cartridge,
+    int32_t         opc,
+    uint32_t        ip,
+    err_t*          base
+);
+
+err_t* err_new_segfault(
     const wchar_t*  info,
     cartridge_t     cartridge,
     int32_t         opc,

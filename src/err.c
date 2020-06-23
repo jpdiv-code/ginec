@@ -170,6 +170,34 @@ err_t* err_new_unknown_opcode(
     return err;
 }
 
+err_t* err_new_segfault(
+    const wchar_t*  info,
+    cartridge_t     cartridge,
+    int32_t         opc,
+    uint32_t        ip,
+    err_t*          base
+) {
+    wchar_t* msg;
+    err_t* err;
+
+    if (info == NULL) {
+        msg = err_msg_new(ERR_MAX_MSG_LENGTH,
+            L"Segmentation fault with opcode %d at %zu", opc, ip
+        );
+    } else {
+        msg = err_msg_new(ERR_MAX_MSG_LENGTH,
+            L"Segmentation fault with opcode %d at %zu: %S", opc, ip, info
+        );
+    }
+    err = err_new_base(
+        ERR_T_FILE, msg,
+        err_ctx_new_segfault(cartridge, opc, ip),
+        base
+    );
+
+    return err;
+}
+
 void err_free(
     err_t*  err
 ) {

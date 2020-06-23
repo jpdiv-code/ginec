@@ -53,3 +53,17 @@ err_ctx_t err_ctx_new_unknown_opc(
     
     return ctx;
 }
+
+err_ctx_t err_ctx_new_segfault(
+    cartridge_t cartridge,
+    int32_t     opc,
+    uint32_t    ip
+) {
+    err_ctx_t ctx;
+
+    ctx.segfault.cartridge = cartridge;
+    ctx.segfault.opc = opc;
+    ctx.segfault.ip = ip;
+    
+    return ctx;
+}
