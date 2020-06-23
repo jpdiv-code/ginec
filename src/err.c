@@ -134,7 +134,7 @@ err_t* err_new_runtime(
         );
     }
     err = err_new_base(
-        ERR_T_FILE, msg,
+        ERR_T_RUNTIME, msg,
         err_ctx_new_runtime(cartridge, ip),
         base
     );
@@ -162,7 +162,7 @@ err_t* err_new_unknown_opcode(
         );
     }
     err = err_new_base(
-        ERR_T_FILE, msg,
+        ERR_T_UNKNOWN_OPC, msg,
         err_ctx_new_unknown_opc(cartridge, opc, ip),
         base
     );
@@ -190,7 +190,7 @@ err_t* err_new_segfault(
         );
     }
     err = err_new_base(
-        ERR_T_FILE, msg,
+        ERR_T_SEGFAULT, msg,
         err_ctx_new_segfault(cartridge, opc, ip),
         base
     );
