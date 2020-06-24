@@ -5,6 +5,7 @@
 
 #include "err_ctx.h"
 #include "cartridge.h"
+#include "../test/test.h"
 
 typedef enum ENUM_ERR_T {
     ERR_T_GENERAL       =   0,
@@ -13,6 +14,7 @@ typedef enum ENUM_ERR_T {
     ERR_T_RUNTIME       =   3,
     ERR_T_UNKNOWN_OPC   =   4,
     ERR_T_SEGFAULT      =   5,
+    ERR_T_TEST_FAILED   =   6,
 } ENUM_ERR_T;
 
 typedef struct err_t {
@@ -61,6 +63,13 @@ err_t* err_new_segfault(
     cartridge_t     cartridge,
     int32_t         opc,
     uint32_t        ip,
+    err_t*          base
+);
+
+err_t* err_new_test_failed(
+    const wchar_t*  info,
+    cartridge_t     cartridge,
+    test_t          test,
     err_t*          base
 );
 

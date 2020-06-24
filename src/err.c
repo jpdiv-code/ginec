@@ -198,6 +198,29 @@ err_t* err_new_segfault(
     return err;
 }
 
+err_t* err_new_test_failed(
+    const wchar_t*  info,
+    cartridge_t     cartridge,
+    test_t          test,
+    err_t*          base
+) {
+    wchar_t* msg;
+    err_t* err;
+
+    if (info == NULL) {
+        msg = err_msg_new(ERR_MAX_MSG_LENGTH, L"Test failed");
+    } else {
+        msg = err_msg_new(ERR_MAX_MSG_LENGTH, L"Test failed: %S", info);
+    }
+    err = err_new_base(
+        ERR_T_TEST_FAILED, msg,
+        err_ctx_new_test_failed(cartridge, test),
+        base
+    );
+
+    return err;
+}
+
 void err_free(
     err_t*  err
 ) {

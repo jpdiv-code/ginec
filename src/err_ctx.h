@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "cartridge.h"
+#include "../test/test.h"
 
 typedef enum ENUM_ERR_FILE_T {
     ERR_FILE_T_GENERAL      =   0,
@@ -39,6 +40,11 @@ typedef union err_ctx_t {
         int32_t     opc;
         uint32_t    ip;
     } segfault;
+
+    struct {
+        cartridge_t cartridge;
+        test_t      test;
+    } test_failed;
 } err_ctx_t;
 
 err_ctx_t err_ctx_new_malloc(
@@ -68,3 +74,7 @@ err_ctx_t err_ctx_new_segfault(
     uint32_t    ip
 );
 
+err_ctx_t err_ctx_new_test_failed(
+    cartridge_t cartridge,
+    test_t      test
+);

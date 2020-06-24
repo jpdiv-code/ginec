@@ -67,3 +67,15 @@ err_ctx_t err_ctx_new_segfault(
     
     return ctx;
 }
+
+err_ctx_t err_ctx_new_test_failed(
+    cartridge_t cartridge,
+    test_t      test
+) {
+    err_ctx_t ctx;
+
+    ctx.test_failed.cartridge = cartridge;
+    ctx.test_failed.test = test;
+
+    return ctx;
+}
