@@ -1,52 +1,44 @@
-CC=gcc
+CC = gcc
 
-RM=rm -rf
-INSTALL=install
-MKDIR=mkdir -p
+STANDARD_FLAGS = -std=c99
+OPTIMIZATION_FLAGS = -O3 -ffast-math -funroll-loops -fstrict-aliasing -falign-functions
+WARNING_FLAGS = -Wall -Wextra -Wpedantic -Werror -Wconversion -Wshadow
 
-CVER=-std=c99
-COPT=-O2
-CMES=-Wall -Wextra -Wpedantic -Wshadow
+INCLUDE_FLAGS = -Iinclude
+LD_FLAGS =
 
-CFLAGS=$(CVER) $(COPT) $(CMES)
-DEBUGCFLAGS=-ggdb $(CVER) $(CMES)
-TESTCFLAGS=-ggdb -D TEST -Itest $(CVER) $(CMES)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    # macOS
+    RAYLIB_PREFIX := $(shell brew --prefix raylib)
+    INCLUDE_FLAGS += -I$(RAYLIB_PREFIX)/include
+    LDFLAGS += -L$(RAYLIB_PREFIX)/lib \
+        -lraylib \
+        -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
+else
+    # linux
+    LDFLAGS += -lraylib -lm -lpthread -ldl -lrt -lX11
+endif
 
-SRCDIR=./src
-TESTRCDIR=./test
-BINDIR=./bin
-BINNAME=ginec
-BINPATH=$(BINDIR)/$(BINNAME)
-DEBUGBINPATH=$(BINPATH)-debug
-TESTBINPATH=$(BINPATH)-test
-INSTALLPATH=/usr/local/bin
+CFLAGS = $(STANDARD_FLAGS) $(OPTIMIZATION_FLAGS) $(WARNING_FLAGS) $(INCLUDE_FLAGS)
 
-SOURCES=$(wildcard $(SRCDIR)/*.c)
-TESTSOURCES=$(SOURCES) $(wildcard $(TESTRCDIR)/*.c)
+SRCS = $(wildcard src/*.c)
+OBJS = $(SRCS:.c=.o)
+TARGET = ginec
 
-build:
-	$(MKDIR) $(BINDIR)
-	$(CC) $(SOURCES) $(CFLAGS) -o $(BINPATH)
+.PHONY: all clean run
 
-build-debug:
-	$(MKDIR) $(BINDIR)
-	$(CC) $(SOURCES) $(DEBUGCFLAGS) -o $(DEBUGBINPATH)
+all: $(TARGET)
 
-build-test:
-	$(MKDIR) $(BINDIR)
-	$(CC) $(TESTSOURCES) $(TESTCFLAGS) -o $(TESTBINPATH)
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
-run:
-	$(BINPATH)
+%.o: %
+	$(CC) $(CFLAGS) -c $< -o $@
 
-run-test:
-	$(TESTBINPATH)
+clean:
+	rm -f $(OBJS) $(TARGET)
 
-clear:
-	$(RM) $(BINDIR)
+run: $(TARGET)
+	./$(TARGET)
 
-install:
-	$(INSTALL) $(BINPATH) $(INSTALLPATH)
-
-uninstall:
-	$(RM) $(INSTALLPATH)/$(BINNAME)
