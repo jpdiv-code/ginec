@@ -9,7 +9,7 @@ The virtual machine exposes **three independent 16-bit address spaces**, each ra
 
 | Space | Name  | Purpose |
 |------|-------|---------|
-| ROMA | ROM Assets | Read-only asset storage (palette, audio samples, lookup tables) |
+| ROMA | ROM Assets | Read-only asset storage (palette, audio samples, lookup tables, etc.) |
 | ROMB | ROM Bytecode | Read-only executable bytecode |
 | RAM  | RAM | Read-write working memory |
 
@@ -20,9 +20,9 @@ Address spaces are isolated. Instructions explicitly specify the target space.
 ### Registers
 
 #### General Purpose Registers
-- `R0`–`R7` — 8 general-purpose 16-bit registers
+- `R0`–`R3` — 4 general-purpose 16-bit registers
 
-Registers are untyped. Interpretation (integer or float16) depends on the instruction.
+Registers are untyped.
 
 #### Special Registers
 - `PC` — Program Counter (16-bit, ROMB)
@@ -54,7 +54,8 @@ This section describes instruction categories only.
 - Register-to-register moves
 - Immediate loads (8-bit and 16-bit)
 - Load/store between registers and RAM
-- Load from ROMA into registers or RAM
+- Load from ROMA into registers
+- Push/pop to/from stack in RAM (immediate and register forms)
 
 #### Integer Arithmetic (16-bit)
 - Addition, subtraction
@@ -63,20 +64,8 @@ This section describes instruction categories only.
 - Comparison (flag-setting only)
 
 #### Control Flow
-- Absolute and conditional jumps
-- Subroutine calls and returns
-- Stack operations (PUSH/POP)
-
-#### Float16 Arithmetic
-Registers store raw IEEE 754 half-precision values.
-
-Supported operations:
-- Integer ↔ float16 conversion
-- Addition, subtraction
-- Multiplication, division
-- Comparison (flag-setting)
-
-No transcendental operations are provided.
+- Absolute and relative jumps, unconditional and conditional (on FLAGS)
+- Call/return using the stack
 
 ---
 
@@ -113,6 +102,13 @@ Rendering is deferred until `VSYNC` is executed.
 - Enforces a fixed **24 FPS** virtual frame rate
 
 All input latch states are cleared on `VSYNC`.
+
+#### `VSYNC` instruction
+- Finalizes the current VM frame
+- Signals the host to render the most recently prepared framebuffer
+- Blocks VM execution until the next frame boundary
+- Enforces a fixed **24 FPS** virtual frame rate
+- All input latch states are updated on `VSYNC`
 
 ---
 
@@ -206,10 +202,6 @@ All channels are mixed by the host.
 ### VM Execution Model
 
 - Bytecode is executed sequentially from ROMB
-- After every **N executed instructions**, the VM:
-  - Polls host events
-  - Updates input latch states
-  - Renders the most recently finalized frame (if any)
 - `VSYNC` defines the canonical frame boundary
 
 The VM runs in a single thread.
@@ -222,7 +214,7 @@ Total RAM size: **65,536 bytes**
 
 | Address Range | Size | Purpose |
 |--------------|------|---------|
-| `0x0000–0x00FF` | 256 B | MMIO (input and system registers) |
+| `0x0000–0x00FF` | 256 B | MMIO (input, audio) |
 | `0x0100–0x60AF` | 24,480 B | Framebuffer (180 × 136) |
 | `0x60B0–0xDFFF` | 32,608 B | General-purpose RAM |
 | `0xE000–0xFFFF` | 8,192 B | Stack (grows downward) |
@@ -241,3 +233,4 @@ Out-of-bounds memory access is undefined behavior.
 | `0x0040–0xFFFF` | Audio samples and other assets |
 
 ROMA is strictly read-only from the VM perspective.
+
