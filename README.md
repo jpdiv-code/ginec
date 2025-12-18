@@ -67,6 +67,8 @@ This section describes instruction categories only.
 - Absolute and relative jumps, unconditional and conditional (on FLAGS)
 - Call/return using the stack
 
+Opcodes: https://docs.google.com/spreadsheets/d/1KX17rRPHqwX_RdwbMEfj9ypyBbH-xKldakPiaY_tD00
+
 ---
 
 ### Graphics System
@@ -93,15 +95,6 @@ Rendering is deferred until `VSYNC` is executed.
 ---
 
 ### Frame Synchronization Instruction
-
-#### `VSYNC`
-
-- Finalizes the current VM frame
-- Signals the host to render the most recently prepared framebuffer
-- Blocks VM execution until the next frame boundary
-- Enforces a fixed **24 FPS** virtual frame rate
-
-All input latch states are cleared on `VSYNC`.
 
 #### `VSYNC` instruction
 - Finalizes the current VM frame
