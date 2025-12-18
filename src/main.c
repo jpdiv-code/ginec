@@ -137,7 +137,6 @@ StepResult vm_step(VM *vm) {
             uint8_t low = vm->romb[vm->ip];
             vm->ip++;
             uint8_t high = vm->romb[vm->ip];
-            vm->ip++;
             uint16_t addr = 0x0000;
             addr |= (uint16_t)low;
             addr |= (uint16_t)(high << 8);
@@ -154,7 +153,9 @@ StepResult vm_step(VM *vm) {
 // MAIN
 // ==============================
 
-int main() {
+int main(int argc, char *argv[]) {
+    (void)argc; (void)argv;
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0)
     {
         fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
@@ -262,4 +263,3 @@ int main() {
     SDL_Quit();
     return 0;
 }
-
