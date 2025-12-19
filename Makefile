@@ -34,3 +34,5 @@ clean:
 run: $(TARGET)
 	./$(TARGET)
 
+hooks:
+	git config core.hooksPath hooks
