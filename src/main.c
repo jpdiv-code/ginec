@@ -1,4 +1,3 @@
-#include "roma.h" // Include the palette definition
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -6,6 +5,8 @@
 
 #include <SDL2/SDL.h>
 #include <string.h>
+
+#include "roma.h" // Include the palette definition
 
 // ==============================
 // VM CONSTANTS
@@ -158,27 +159,26 @@ StepResult vm_step(VM* vm)
 // Draw sprites
 // ==============================
 
-void draw_sprite(VM* vm, int sprite_start_x, int sprite_start_y, int sprite_id, int sprite_w,
-                 int sprite_h)
+void draw_sprite(
+        VM* vm,
+        int sprite_start_x, int sprite_start_y,
+        int sprite_id, int sprite_w, int sprite_h
+)
 {
     int sprite_count = (int)(sizeof(sprites) / sizeof(sprites[0]));
-    if (sprite_id >= sprite_count)
-        sprite_id = 0; // use empty sprite for invalid id
+    if (sprite_id >= sprite_count) sprite_id = 0; // use empty sprite for invalid id
 
     for (int sprite_y = 0; sprite_y < sprite_h; sprite_y++)
     {
         for (int sprite_x = 0; sprite_x < sprite_w; sprite_x++)
         {
             uint8_t pixel = sprites[sprite_id][sprite_y][sprite_x];
-            if (pixel == 0)
-                continue; // transparent
+            if (pixel == 0) continue; // transparent
 
             int pixel_to_paint_x = sprite_start_x + sprite_x;
             int pixel_to_paint_y = sprite_start_y + sprite_y;
 
-            if (pixel_to_paint_x < 0 || pixel_to_paint_y < 0 || pixel_to_paint_x >= FB_W ||
-                pixel_to_paint_y >= FB_H)
-                continue;
+            if (pixel_to_paint_x < 0 || pixel_to_paint_y < 0 || pixel_to_paint_x >= FB_W || pixel_to_paint_y >= FB_H) continue;
 
             int fb_index = RAM_FB_BASE + pixel_to_paint_y * FB_W + pixel_to_paint_x;
 
@@ -203,8 +203,11 @@ int main(int argc, char* argv[])
     }
 
     SDL_Window* win = SDL_CreateWindow(
-        "Fantasy VM (SDL2)", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, FB_W * RENDER_SCALE,
-        FB_H * RENDER_SCALE, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+        "Fantasy VM (SDL2)",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        FB_W * RENDER_SCALE, FB_H * RENDER_SCALE,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
+    );
     if (!win)
     {
         fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());
@@ -212,8 +215,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    SDL_Renderer* ren =
-        SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    SDL_Renderer* ren = SDL_CreateRenderer(
+            win, -1,
+            SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
+    );
     if (!ren)
     {
         fprintf(stderr, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
@@ -222,8 +227,12 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    SDL_Texture* tex =
-        SDL_CreateTexture(ren, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, FB_W, FB_H);
+    SDL_Texture* tex = SDL_CreateTexture(
+            ren,
+            SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING,
+            FB_W, FB_H
+    );
     if (!tex)
     {
         fprintf(stderr, "SDL_CreateTexture failed: %s\n", SDL_GetError());
@@ -268,10 +277,7 @@ int main(int argc, char* argv[])
                 running = false;
                 break;
             }
-            if (res == STEP_VSYNC)
-            {
-                break;
-            }
+            if (res == STEP_VSYNC) { break; }
             if (res == STEP_ERROR)
             {
                 fprintf(stderr, "VM encountered an error during execution\n");
@@ -279,25 +285,15 @@ int main(int argc, char* argv[])
                 break;
             }
         }
-        if (!running)
-        {
-            break;
-        }
+        if (!running) { break; }
 
         SDL_Event e;
         while (SDL_PollEvent(&e))
         {
-            if (e.type == SDL_QUIT)
-            {
-                running = false;
-            }
-            if (e.type == SDL_KEYDOWN && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
-            {
-                running = false;
-            }
+            if (e.type == SDL_QUIT) { running = false; }
+            if (e.type == SDL_KEYDOWN && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) { running = false; }
         }
-        if (!running)
-            break;
+        if (!running) { break; }
 
         // TODO: Update input states in MIMO region of RAM
         // TODO: Render framebuffer from RAM to scratch_rgba
