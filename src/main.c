@@ -73,7 +73,7 @@ typedef struct VM
 typedef enum
 {
     STEP_OK = 0,
-    STEP_VSYNC = 1,
+    STEP_SYNC = 1,
     STEP_HALT = 2,
     STEP_ERROR = 3,
 } StepResult;
@@ -85,8 +85,8 @@ typedef enum
 enum
 {
     OP_NOP = 0x00,
-    OP_VSYNC = 0x01,
-    OP_JMP = 0x02,
+    OP_SYNC = 0x02,
+    OP_JMP = 0x70,
 };
 
 // ==============================
@@ -136,8 +136,8 @@ StepResult vm_step(VM* vm)
     {
     case OP_NOP:
         break;
-    case OP_VSYNC:
-        return STEP_VSYNC;
+    case OP_SYNC:
+        return STEP_SYNC;
     case OP_JMP:
     {
         uint8_t low = vm->romb[vm->ip];
@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
     vm.sp = 0xFFFF;
     // TODO: Load ROMA and ROMB from some source
     // For now, just fill ROMB with a simple program that does nothing
-    vm.romb[0x0000] = OP_VSYNC;
+    vm.romb[0x0000] = OP_SYNC;
     vm.romb[0x0001] = OP_JMP;
     vm.romb[0x0002] = 0x00;
     vm.romb[0x0003] = 0x00;
@@ -277,7 +277,7 @@ int main(int argc, char* argv[])
                 running = false;
                 break;
             }
-            if (res == STEP_VSYNC) { break; }
+            if (res == STEP_SYNC) { break; }
             if (res == STEP_ERROR)
             {
                 fprintf(stderr, "VM encountered an error during execution\n");

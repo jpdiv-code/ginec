@@ -90,18 +90,18 @@ Opcodes: https://docs.google.com/spreadsheets/d/1KX17rRPHqwX_RdwbMEfj9ypyBbH-xKl
 
 The framebuffer resides entirely in RAM and is modified directly by the VM.
 
-Rendering is deferred until `VSYNC` is executed.
+Rendering is deferred until `SYNC` is executed.
 
 ---
 
 ### Frame Synchronization Instruction
 
-#### `VSYNC` instruction
+#### `SYNC` instruction
 - Finalizes the current VM frame
 - Signals the host to render the most recently prepared framebuffer
 - Blocks VM execution until the next frame boundary
 - Enforces a fixed **24 FPS** virtual frame rate
-- All input latch states are updated on `VSYNC`
+- All input latch states are updated on `SYNC`
 
 ---
 
@@ -136,11 +136,11 @@ Bits 12–15 are reserved and must be zero.
 | Offset | Purpose |
 |------:|---------|
 | `0x00` | INPUT_DOWN (current state) |
-| `0x02` | INPUT_PRESSED (latched since last VSYNC) |
-| `0x04` | INPUT_RELEASED (latched since last VSYNC) |
+| `0x02` | INPUT_PRESSED (latched since last SYNC) |
+| `0x04` | INPUT_RELEASED (latched since last SYNC) |
 
 - INPUT_PRESSED and INPUT_RELEASED are accumulated by the host
-- All latched input state is cleared automatically on `VSYNC`
+- All latched input state is cleared automatically on `SYNC`
 - Host implementations may map these buttons to any physical input devices
 
 ---
@@ -195,7 +195,7 @@ All channels are mixed by the host.
 ### VM Execution Model
 
 - Bytecode is executed sequentially from ROMB
-- `VSYNC` defines the canonical frame boundary
+- `SYNC` defines the canonical frame boundary
 
 The VM runs in a single thread.
 
