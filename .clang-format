@@ -6,3 +6,5 @@ PointerAlignment: Left
 DerivePointerAlignment: false
 AllowShortIfStatementsOnASingleLine: Never
 BreakBeforeBraces: Allman
+InsertNewlineAtEOF: true
+
