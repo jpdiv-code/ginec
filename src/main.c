@@ -235,7 +235,11 @@ StepResult vm_step(VM* vm)
         uint16_t addr = vm->reg[ra];
         uint8_t value = (uint8_t)(vm->reg[rp] & 0x00FF);
         uint16_t length = vm->reg[rl];
-        memset(&vm->ram[addr], value, length);
+        for (uint32_t i = 0; i < length; i++)
+        {
+            uint32_t write_addr = addr + i;
+            vm->ram[write_addr] = value;
+        }
         break;
     }
     case OP_FILLw:
