@@ -29,8 +29,8 @@
 
 #define RENDER_SCALE 4 // Scale factor for rendering
 
-#define ROMA_PALETTE_BASE 0x0000 // Base address for palette data in ROMA (32 colors, 3 bytes each)
-#define ROMA_PALETTE_SIZE 0x0060 // Size of palette data (96 bytes)
+#define ROMA_PALETTE_BASE 0x0000 // Base address for palette data in ROMA (32 RGB565 colors, 2 bytes each)
+#define ROMA_PALETTE_SIZE 0x0040 // Size of palette data in ROMA (64 bytes)
 
 #define VM_FRAME_DT (1.0f / 24.0f) // Fixed timestep for VM frame updates (24 FPS)
 
@@ -386,3 +386,4 @@ int main(int argc, char* argv[])
     SDL_Quit();
     return 0;
 }
+
