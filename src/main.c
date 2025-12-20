@@ -161,13 +161,15 @@ StepResult vm_step(VM* vm)
 void draw_sprite(VM* vm, int sprite_start_x, int sprite_start_y, int sprite_id, int sprite_w,
                  int sprite_h)
 {
-    (void)sprite_id; // there is only one sprite RU_I for now
+    int sprite_count = (int)(sizeof(sprites) / sizeof(sprites[0]));
+    if (sprite_id >= sprite_count)
+        sprite_id = 0; // use empty sprite for invalid id
 
     for (int sprite_y = 0; sprite_y < sprite_h; sprite_y++)
     {
         for (int sprite_x = 0; sprite_x < sprite_w; sprite_x++)
         {
-            uint8_t pixel = RU_I[sprite_y][sprite_x];
+            uint8_t pixel = sprites[sprite_id][sprite_y][sprite_x];
             if (pixel == 0)
                 continue; // transparent
 
@@ -301,7 +303,9 @@ int main(int argc, char* argv[])
         // TODO: Render framebuffer from RAM to scratch_rgba
         // TODO: Render scratch_rgba to texture and present
 
-        // заполнение буфера для демонстрации
+        // ==============================
+        // buffer rendering demo code
+        // ==============================
 
         // memset(&vm.ram[RAM_FB_BASE], 0, FB_SIZE); // Clear framebuffer for demonstration
 
@@ -321,11 +325,34 @@ int main(int argc, char* argv[])
         //     format
         // }
 
-        // выведение спрайта RU_I для демонстрации
+        // ==============================
+        // drawing sprite RU_I demo code
+        // ==============================
 
         memset(&vm.ram[RAM_FB_BASE], 0, FB_SIZE); // Clear framebuffer for demonstration
 
-        draw_sprite(&vm, 1, 1, 0, 8, 8); // Draw sprite ID 0 at (50,50)
+        uint16_t offset = 1;
+
+        draw_sprite(&vm, offset, 1, 1, 8, 8); // Draw sprite RU_I
+        offset += 8;
+        draw_sprite(&vm, offset, 1, 2, 8, 8); // Draw sprite RU_L
+        offset += 8;
+        draw_sprite(&vm, offset, 1, 3, 8, 8); // Draw sprite RU_U
+        offset += 8;
+        draw_sprite(&vm, offset, 1, 4, 8, 8); // Draw sprite RU_SH
+        offset += 8;
+        draw_sprite(&vm, offset, 1, 5, 8, 8); // Draw sprite RU_A
+        offset += 16;
+
+        draw_sprite(&vm, offset, 1, 4, 8, 8); // Draw sprite RU_SH
+        offset += 8;
+        draw_sprite(&vm, offset, 1, 2, 8, 8); // Draw sprite RU_L
+        offset += 8;
+        draw_sprite(&vm, offset, 1, 3, 8, 8); // Draw sprite RU_U
+        offset += 8;
+        draw_sprite(&vm, offset, 1, 4, 8, 8); // Draw sprite RU_SH
+        offset += 8;
+        draw_sprite(&vm, offset, 1, 5, 8, 8); // Draw sprite RU_A
 
         for (int i = 0; i < FB_SIZE; i++)
         {
