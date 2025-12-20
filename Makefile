@@ -36,3 +36,4 @@ run: $(TARGET)
 
 hooks:
 	git config core.hooksPath hooks
+

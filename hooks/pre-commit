@@ -17,3 +17,4 @@ echo "$FILES" | while IFS= read -r f; do
 "$CF" -i "$f"
 git add "$f"
 done
+
