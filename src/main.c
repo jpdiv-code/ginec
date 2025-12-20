@@ -148,6 +148,19 @@ enum
     OP_STS = 0x2C, // 1 operand: RS, store 8-bit value from RS into RAM at address popped from stack (2 byte-long instruction)
     OP_STSw = 0x2D, // 1 operand: RS, store 16-bit value from RS into RAM at address popped from stack (2 byte-long instruction)
 
+    // ====
+    // ROMA
+    // ====
+
+    OP_LDA = 0x30, // 2 operands: RD addr, load 8-bit value from ROMA at address in addr into RD, zero-filled (4 byte-long instruction)
+    OP_LDAw = 0x31, // 2 operands: RD addr, load 16-bit value from ROMA at address in addr into RD (4 byte-long instruction)
+
+    OP_LDAR = 0x33, // 2 operands: RD RA, load 8-bit value from ROMA at address in RA into RD, zero-filled (3 byte-long instruction)
+    OP_LDARw = 0x34, // 2 operands: RD RA, load 16-bit value from ROMA at address in RA into RD (3 byte-long instruction)
+
+    OP_LDAS = 0x36, // 1 operand: RD, load 8-bit value from ROMA at address popped from stack into RD, zero-filled (2 byte-long instruction)
+    OP_LDASw = 0x37, // 1 operand: RD, load 16-bit value from ROMA at address popped from stack into RD (2 byte-long instruction)
+
     // =====
     // JUMPS
     // =====
@@ -624,6 +637,107 @@ StepResult vm_step(VM* vm)
         uint8_t high_val = (uint8_t)((val16 >> 8) & 0x00FF);
         vm->ram[addr] = low_val;
         vm->ram[addr + 1] = high_val;
+        break;
+    }
+
+    // ====
+    // ROMA
+    // ====
+
+    case OP_LDA:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        uint16_t addr = 0x0000;
+        addr |= (uint16_t)low;
+        addr |= (uint16_t)(high << 8);
+        uint8_t val8 = vm->roma[addr];
+        vm->reg[rd] = (uint16_t)val8;
+        break;
+    }
+    case OP_LDAw:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        uint16_t addr = 0x0000;
+        addr |= (uint16_t)low;
+        addr |= (uint16_t)(high << 8);
+        uint8_t low_val = vm->roma[addr];
+        uint8_t high_val = vm->roma[addr + 1];
+        uint16_t val16 = 0x0000;
+        val16 |= (uint16_t)low_val;
+        val16 |= (uint16_t)(high_val << 8);
+        vm->reg[rd] = val16;
+        break;
+    }
+
+    case OP_LDAR:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint16_t addr = vm->reg[ra];
+        uint8_t val8 = vm->roma[addr];
+        vm->reg[rd] = (uint16_t)val8;
+        break;
+    }
+    case OP_LDARw:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint16_t addr = vm->reg[ra];
+        uint8_t low_val = vm->roma[addr];
+        uint8_t high_val = vm->roma[addr + 1];
+        uint16_t val16 = 0x0000;
+        val16 |= (uint16_t)low_val;
+        val16 |= (uint16_t)(high_val << 8);
+        vm->reg[rd] = val16;
+        break;
+    }
+
+    case OP_LDAS:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        vm->sp++;
+        uint8_t low = vm->ram[vm->sp];
+        vm->sp++;
+        uint8_t high = vm->ram[vm->sp];
+        uint16_t addr = 0x0000;
+        addr |= (uint16_t)low;
+        addr |= (uint16_t)(high << 8);
+        uint8_t val8 = vm->roma[addr];
+        vm->reg[rd] = (uint16_t)val8;
+        break;
+    }
+    case OP_LDASw:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        vm->sp++;
+        uint8_t low = vm->ram[vm->sp];
+        vm->sp++;
+        uint8_t high = vm->ram[vm->sp];
+        uint16_t addr = 0x0000;
+        addr |= (uint16_t)low;
+        addr |= (uint16_t)(high << 8);
+        uint8_t low_val = vm->roma[addr];
+        uint8_t high_val = vm->roma[addr + 1];
+        uint16_t val16 = 0x0000;
+        val16 |= (uint16_t)low_val;
+        val16 |= (uint16_t)(high_val << 8);
+        vm->reg[rd] = val16;
         break;
     }
 
