@@ -240,7 +240,7 @@ StepResult vm_step(VM* vm)
         uint8_t high = (uint8_t)((value >> 8) & 0x00FF);
         for (uint32_t i = 0; i < length; i++)
         {
-            uint16_t write_addr = addr + i * 2;
+            uint32_t write_addr = addr + i * 2;
             vm->ram[write_addr] = low;
             vm->ram[write_addr + 1] = high;
         }
@@ -254,7 +254,7 @@ StepResult vm_step(VM* vm)
         uint16_t seed = vm->reg[rs];
         if (seed == 0)
         {
-            seed = time(NULL) & 0xFFFF;
+            seed = (uint16_t)(time(NULL) & 0xFFFF);
         }
         srand((uint32_t)seed);
         break;
