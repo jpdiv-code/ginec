@@ -357,7 +357,7 @@ int main(int argc, char* argv[])
             color_id &= 31; // Ensure color_id is within palette range
 
             Color col = palette[color_id];
-            scratch_rgba[i] = (0xFF << 24) | (col.r << 16) | (col.g << 8) | (col.b); // ARGB format
+            scratch_rgba[i] = (uint32_t)((0xFF << 24) | (col.r << 16) | (col.g << 8) | (col.b)); // ARGB format
         }
 
         SDL_UpdateTexture(tex, NULL, scratch_rgba, FB_W * sizeof(uint32_t));
@@ -382,4 +382,3 @@ int main(int argc, char* argv[])
     SDL_Quit();
     return 0;
 }
-

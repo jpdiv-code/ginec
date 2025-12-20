@@ -129,4 +129,3 @@ Color palette[32] = {
     {0x20, 0x20, 0x20}, // 30: Very Dark Gray
     {0xE0, 0xE0, 0xE0}, // 31: Off White
 };
-
