@@ -1,3 +1,4 @@
+#include "roma.h" // Include the palette definition
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -154,6 +155,37 @@ StepResult vm_step(VM* vm)
 }
 
 // ==============================
+// Draw sprites
+// ==============================
+
+void draw_sprite(VM* vm, int sprite_start_x, int sprite_start_y, int sprite_id, int sprite_w,
+                 int sprite_h)
+{
+    (void)sprite_id; // there is only one sprite RU_I for now
+
+    for (int sprite_y = 0; sprite_y < sprite_h; sprite_y++)
+    {
+        for (int sprite_x = 0; sprite_x < sprite_w; sprite_x++)
+        {
+            uint8_t pixel = RU_I[sprite_y][sprite_x];
+            if (pixel == 0)
+                continue; // transparent
+
+            int pixel_to_paint_x = sprite_start_x + sprite_x;
+            int pixel_to_paint_y = sprite_start_y + sprite_y;
+
+            if (pixel_to_paint_x < 0 || pixel_to_paint_y < 0 || pixel_to_paint_x >= FB_W ||
+                pixel_to_paint_y >= FB_H)
+                continue;
+
+            int fb_index = RAM_FB_BASE + pixel_to_paint_y * FB_W + pixel_to_paint_x;
+
+            vm->ram[fb_index] = pixel; // pixel = palette index
+        }
+    }
+}
+
+// ==============================
 // MAIN
 // ==============================
 
@@ -268,6 +300,47 @@ int main(int argc, char* argv[])
         // TODO: Update input states in MIMO region of RAM
         // TODO: Render framebuffer from RAM to scratch_rgba
         // TODO: Render scratch_rgba to texture and present
+
+        // заполнение буфера для демонстрации
+
+        // memset(&vm.ram[RAM_FB_BASE], 0, FB_SIZE); // Clear framebuffer for demonstration
+
+        // for (int i = 0; i < FB_SIZE; i++)
+        // {
+        //     vm.ram[RAM_FB_BASE + i] = 1;
+        // }
+
+        // for (int i = 0; i < FB_SIZE; i++)
+        // {
+        //     uint8_t color_id = vm.ram[RAM_FB_BASE + i];
+
+        //     color_id &= 31; // Ensure color_id is within palette range
+
+        //     Color col = palette[color_id];
+        //     scratch_rgba[i] = (0xFF << 24) | (col.r << 16) | (col.g << 8) | (col.b); // ARGB
+        //     format
+        // }
+
+        // выведение спрайта RU_I для демонстрации
+
+        memset(&vm.ram[RAM_FB_BASE], 0, FB_SIZE); // Clear framebuffer for demonstration
+
+        draw_sprite(&vm, 1, 1, 0, 8, 8); // Draw sprite ID 0 at (50,50)
+
+        for (int i = 0; i < FB_SIZE; i++)
+        {
+            uint8_t color_id = vm.ram[RAM_FB_BASE + i];
+
+            color_id &= 31; // Ensure color_id is within palette range
+
+            Color col = palette[color_id];
+            scratch_rgba[i] = (0xFF << 24) | (col.r << 16) | (col.g << 8) | (col.b); // ARGB format
+        }
+
+        SDL_UpdateTexture(tex, NULL, scratch_rgba, FB_W * sizeof(uint32_t));
+        SDL_RenderClear(ren);
+        SDL_RenderCopy(ren, tex, NULL, NULL);
+        SDL_RenderPresent(ren);
 
         sleep_until(next_frame_time);
         next_frame_time += VM_FRAME_DT;
