@@ -7,7 +7,8 @@
 #include <string.h>
 #include <time.h>
 
-#include "roma.h" // Include the palette definition
+#include "roma.h"   // Include test ROMA data
+#include "vga256.h" // Include Color type and VGA256 palette
 
 // ==============================
 // VM CONSTANTS
@@ -32,10 +33,6 @@
 #define FB_SIZE (FB_W * FB_H) // Framebuffer size
 
 #define RENDER_SCALE 4 // Scale factor for rendering
-
-#define ROMA_PALETTE_BASE                                                                          \
-    0x0000 // Base address for palette data in ROMA (32 RGB565 colors, 2 bytes each)
-#define ROMA_PALETTE_SIZE 0x0040 // Size of palette data in ROMA (64 bytes)
 
 #define VM_FRAME_DT (1.0f / 24.0f) // Fixed timestep for VM frame updates (24 FPS)
 
@@ -965,8 +962,6 @@ int main(int argc, char* argv[])
         // {
         //     uint8_t color_id = vm.ram[RAM_FB_BASE + i];
 
-        //     color_id &= 31; // Ensure color_id is within palette range
-
         //     Color col = palette[color_id];
         //     scratch_rgba[i] = (0xFF << 24) | (col.r << 16) | (col.g << 8) | (col.b); // ARGB
         //     format
@@ -1004,8 +999,6 @@ int main(int argc, char* argv[])
         for (int i = 0; i < FB_SIZE; i++)
         {
             uint8_t color_id = vm.ram[RAM_FB_BASE + i];
-
-            color_id &= 31; // Ensure color_id is within palette range
 
             Color col = palette[color_id];
             scratch_rgba[i] =
