@@ -7,4 +7,7 @@ DerivePointerAlignment: false
 AllowShortIfStatementsOnASingleLine: Never
 BreakBeforeBraces: Allman
 InsertNewlineAtEOF: true
+KeepEmptyLines:
+  AtEndOfFile: true
+MaxEmptyLinesToKeep: 2
 

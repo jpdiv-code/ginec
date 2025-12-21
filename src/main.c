@@ -33,7 +33,8 @@
 
 #define RENDER_SCALE 4 // Scale factor for rendering
 
-#define ROMA_PALETTE_BASE 0x0000 // Base address for palette data in ROMA (32 RGB565 colors, 2 bytes each)
+#define ROMA_PALETTE_BASE                                                                          \
+    0x0000 // Base address for palette data in ROMA (32 RGB565 colors, 2 bytes each)
 #define ROMA_PALETTE_SIZE 0x0040 // Size of palette data in ROMA (64 bytes)
 
 #define VM_FRAME_DT (1.0f / 24.0f) // Fixed timestep for VM frame updates (24 FPS)
@@ -95,11 +96,15 @@ enum
     OP_HLT = 0x01,
     OP_SYNC = 0x02,
 
-    OP_FILL = 0x04, // 3 operands: RA RP RL, fill RAM region starting at address in RA with 8-bit value in RP for RL bytes (4 byte-long instruction)
-    OP_FILLw = 0x05, // 3 operands: RA RP RL, fill RAM region starting at address in RA with 16-bit value in RP for RL words (4 byte-long instruction)
+    OP_FILL = 0x04,  // 3 operands: RA RP RL, fill RAM region starting at address in RA with 8-bit
+                     // value in RP for RL bytes (4 byte-long instruction)
+    OP_FILLw = 0x05, // 3 operands: RA RP RL, fill RAM region starting at address in RA with 16-bit
+                     // value in RP for RL words (4 byte-long instruction)
 
-    OP_SEED = 0x07, // 1 operand: RS, seed the random number generator with the 16-bit value in RS (2 byte-long instruction)
-    OP_RAND = 0x08, // 1 operand: RD, generate a random 16-bit value and store it in RD (2 byte-long instruction)
+    OP_SEED = 0x07, // 1 operand: RS, seed the random number generator with the 16-bit value in RS
+                    // (2 byte-long instruction)
+    OP_RAND = 0x08, // 1 operand: RD, generate a random 16-bit value and store it in RD (2 byte-long
+                    // instruction)
 
     // ===
     // REG
@@ -107,59 +112,85 @@ enum
 
     OP_MOV = 0x0A, // 2 operands: RD RS, move value from RS to RD (3 byte-long instruction)
 
-    OP_LDI = 0x0C,  // 2 operands: RD IMM8, load immediate 8-bit value into RD, zero-filled (3 byte-long instruction)
-    OP_LDIw = 0x0D, // 2 operands: RD IMM16, load immediate 16-bit value into RD (4 byte-long instruction)
+    OP_LDI = 0x0C, // 2 operands: RD IMM8, load immediate 8-bit value into RD, zero-filled (3
+                   // byte-long instruction)
+    OP_LDIw =
+        0x0D, // 2 operands: RD IMM16, load immediate 16-bit value into RD (4 byte-long instruction)
 
     // =====
     // STACK
     // =====
 
-    OP_PUSHI = 0x10, // 1 operand: IMM8, push immediate 8-bit value onto stack (2 byte-long instruction)
-    OP_PUSHIw = 0x11, // 1 operand: IMM16, push immediate 16-bit value onto stack (3 byte-long instruction)
+    OP_PUSHI =
+        0x10, // 1 operand: IMM8, push immediate 8-bit value onto stack (2 byte-long instruction)
+    OP_PUSHIw =
+        0x11, // 1 operand: IMM16, push immediate 16-bit value onto stack (3 byte-long instruction)
 
-    OP_PUSH = 0x13, // 1 operand: RS, push an 8-bit value from register onto stack (2 byte-long instruction)
-    OP_PUSHw = 0x14, // 1 operand: RS, push a 16-bit value from register onto stack (2 byte-long instruction)
+    OP_PUSH = 0x13,  // 1 operand: RS, push an 8-bit value from register onto stack (2 byte-long
+                     // instruction)
+    OP_PUSHw = 0x14, // 1 operand: RS, push a 16-bit value from register onto stack (2 byte-long
+                     // instruction)
 
-    OP_POP = 0x16, // 1 operand: RD, pop an 8-bit value from stack into register, zero-filled (2 byte-long instruction)
-    OP_POPw = 0x17, // 1 operand: RD, pop a 16-bit value from stack into register (2 byte-long instruction)
+    OP_POP = 0x16,  // 1 operand: RD, pop an 8-bit value from stack into register, zero-filled (2
+                    // byte-long instruction)
+    OP_POPw = 0x17, // 1 operand: RD, pop a 16-bit value from stack into register (2 byte-long
+                    // instruction)
 
-    OP_SWP = 0x19, // 0 operands, swap top two 8-bit values on stack (1 byte-long instruction)
+    OP_SWP = 0x19,  // 0 operands, swap top two 8-bit values on stack (1 byte-long instruction)
     OP_SWPw = 0x1A, // 0 operands, swap top two 16-bit values on stack (1 byte-long instruction)
 
-    OP_DUP = 0x1C, // 0 operands, duplicate top 8-bit value on stack (1 byte-long instruction)
+    OP_DUP = 0x1C,  // 0 operands, duplicate top 8-bit value on stack (1 byte-long instruction)
     OP_DUPw = 0x1D, // 0 operands, duplicate top 16-bit value on stack (1 byte-long instruction)
 
     // ===
     // RAM
     // ===
 
-    OP_LD = 0x20, // 2 operands: RD addr, load 8-bit value from RAM at address in addr into RD, zero-filled (4 byte-long instruction)
-    OP_LDw = 0x21, // 2 operands: RD addr, load 16-bit value from RAM at address in addr into RD (4 byte-long instruction)
-    OP_ST = 0x22, // 2 operands: RS addr, store 8-bit value from RS into RAM at address in addr (4 byte-long instruction)
-    OP_STw = 0x23, // 2 operands: RS addr, store 16-bit value from RS into RAM at address in addr (4 byte-long instruction)
+    OP_LD = 0x20,  // 2 operands: RD addr, load 8-bit value from RAM at address in addr into RD,
+                   // zero-filled (4 byte-long instruction)
+    OP_LDw = 0x21, // 2 operands: RD addr, load 16-bit value from RAM at address in addr into RD (4
+                   // byte-long instruction)
+    OP_ST = 0x22,  // 2 operands: RS addr, store 8-bit value from RS into RAM at address in addr (4
+                   // byte-long instruction)
+    OP_STw = 0x23, // 2 operands: RS addr, store 16-bit value from RS into RAM at address in addr (4
+                   // byte-long instruction)
 
-    OP_LDR = 0x25, // 2 operands: RD RA, load 8-bit value from RAM at address in RA into RD, zero-filled (3 byte-long instruction)
-    OP_LDRw = 0x26, // 2 operands: RD RA, load 16-bit value from RAM at address in RA into RD (3 byte-long instruction)
-    OP_STR = 0x27, // 2 operands: RS RA, store 8-bit value from RS into RAM at address in RA (3 byte-long instruction)
-    OP_STRw = 0x28, // 2 operands: RS RA, store 16-bit value from RS into RAM at address in RA (3 byte-long instruction)
+    OP_LDR = 0x25,  // 2 operands: RD RA, load 8-bit value from RAM at address in RA into RD,
+                    // zero-filled (3 byte-long instruction)
+    OP_LDRw = 0x26, // 2 operands: RD RA, load 16-bit value from RAM at address in RA into RD (3
+                    // byte-long instruction)
+    OP_STR = 0x27,  // 2 operands: RS RA, store 8-bit value from RS into RAM at address in RA (3
+                    // byte-long instruction)
+    OP_STRw = 0x28, // 2 operands: RS RA, store 16-bit value from RS into RAM at address in RA (3
+                    // byte-long instruction)
 
-    OP_LDS = 0x2A, // 1 operand: RD, load 8-bit value from RAM at address popped from stack into RD, zero-filled (2 byte-long instruction)
-    OP_LDSw = 0x2B, // 1 operand: RD, load 16-bit value from RAM at address popped from stack into RD (2 byte-long instruction)
-    OP_STS = 0x2C, // 1 operand: RS, store 8-bit value from RS into RAM at address popped from stack (2 byte-long instruction)
-    OP_STSw = 0x2D, // 1 operand: RS, store 16-bit value from RS into RAM at address popped from stack (2 byte-long instruction)
+    OP_LDS = 0x2A, // 1 operand: RD, load 8-bit value from RAM at address popped from stack into RD,
+                   // zero-filled (2 byte-long instruction)
+    OP_LDSw = 0x2B, // 1 operand: RD, load 16-bit value from RAM at address popped from stack into
+                    // RD (2 byte-long instruction)
+    OP_STS = 0x2C, // 1 operand: RS, store 8-bit value from RS into RAM at address popped from stack
+                   // (2 byte-long instruction)
+    OP_STSw = 0x2D, // 1 operand: RS, store 16-bit value from RS into RAM at address popped from
+                    // stack (2 byte-long instruction)
 
     // ====
     // ROMA
     // ====
 
-    OP_LDA = 0x30, // 2 operands: RD addr, load 8-bit value from ROMA at address in addr into RD, zero-filled (4 byte-long instruction)
-    OP_LDAw = 0x31, // 2 operands: RD addr, load 16-bit value from ROMA at address in addr into RD (4 byte-long instruction)
+    OP_LDA = 0x30,  // 2 operands: RD addr, load 8-bit value from ROMA at address in addr into RD,
+                    // zero-filled (4 byte-long instruction)
+    OP_LDAw = 0x31, // 2 operands: RD addr, load 16-bit value from ROMA at address in addr into RD
+                    // (4 byte-long instruction)
 
-    OP_LDAR = 0x33, // 2 operands: RD RA, load 8-bit value from ROMA at address in RA into RD, zero-filled (3 byte-long instruction)
-    OP_LDARw = 0x34, // 2 operands: RD RA, load 16-bit value from ROMA at address in RA into RD (3 byte-long instruction)
+    OP_LDAR = 0x33,  // 2 operands: RD RA, load 8-bit value from ROMA at address in RA into RD,
+                     // zero-filled (3 byte-long instruction)
+    OP_LDARw = 0x34, // 2 operands: RD RA, load 16-bit value from ROMA at address in RA into RD (3
+                     // byte-long instruction)
 
-    OP_LDAS = 0x36, // 1 operand: RD, load 8-bit value from ROMA at address popped from stack into RD, zero-filled (2 byte-long instruction)
-    OP_LDASw = 0x37, // 1 operand: RD, load 16-bit value from ROMA at address popped from stack into RD (2 byte-long instruction)
+    OP_LDAS = 0x36,  // 1 operand: RD, load 8-bit value from ROMA at address popped from stack into
+                     // RD, zero-filled (2 byte-long instruction)
+    OP_LDASw = 0x37, // 1 operand: RD, load 16-bit value from ROMA at address popped from stack into
+                     // RD (2 byte-long instruction)
 
     // =====
     // JUMPS
@@ -213,9 +244,9 @@ StepResult vm_step(VM* vm)
     uint8_t opcode = vm->romb[vm->ip++];
     switch (opcode)
     {
-    // =====
-    // OTHER
-    // =====
+        // =====
+        // OTHER
+        // =====
 
     case OP_NOP:
         break;
@@ -285,9 +316,9 @@ StepResult vm_step(VM* vm)
         break;
     }
 
-    // ===
-    // REG
-    // ===
+        // ===
+        // REG
+        // ===
 
     case OP_MOV:
     {
@@ -323,9 +354,9 @@ StepResult vm_step(VM* vm)
         break;
     }
 
-    // =====
-    // STACK
-    // =====
+        // =====
+        // STACK
+        // =====
 
     case OP_PUSHI:
     {
@@ -452,9 +483,9 @@ StepResult vm_step(VM* vm)
         break;
     }
 
-    // ===
-    // RAM
-    // ===
+        // ===
+        // RAM
+        // ===
 
     case OP_LD:
     {
@@ -644,9 +675,9 @@ StepResult vm_step(VM* vm)
         break;
     }
 
-    // ====
-    // ROMA
-    // ====
+        // ====
+        // ROMA
+        // ====
 
     case OP_LDA:
     {
@@ -745,9 +776,9 @@ StepResult vm_step(VM* vm)
         break;
     }
 
-    // =====
-    // JUMPS
-    // =====
+        // =====
+        // JUMPS
+        // =====
 
     case OP_JMP:
     {
@@ -772,26 +803,27 @@ StepResult vm_step(VM* vm)
 // DRAW UTILITIES
 // ==============================
 
-void draw_sprite(
-        VM* vm,
-        int sprite_start_x, int sprite_start_y,
-        int sprite_id, int sprite_w, int sprite_h
-)
+void draw_sprite(VM* vm, int sprite_start_x, int sprite_start_y, int sprite_id, int sprite_w,
+                 int sprite_h)
 {
     int sprite_count = (int)(sizeof(sprites) / sizeof(sprites[0]));
-    if (sprite_id >= sprite_count) sprite_id = 0; // use empty sprite for invalid id
+    if (sprite_id >= sprite_count)
+        sprite_id = 0; // use empty sprite for invalid id
 
     for (int sprite_y = 0; sprite_y < sprite_h; sprite_y++)
     {
         for (int sprite_x = 0; sprite_x < sprite_w; sprite_x++)
         {
             uint8_t pixel = sprites[sprite_id][sprite_y][sprite_x];
-            if (pixel == 0) continue; // transparent
+            if (pixel == 0)
+                continue; // transparent
 
             int pixel_to_paint_x = sprite_start_x + sprite_x;
             int pixel_to_paint_y = sprite_start_y + sprite_y;
 
-            if (pixel_to_paint_x < 0 || pixel_to_paint_y < 0 || pixel_to_paint_x >= FB_W || pixel_to_paint_y >= FB_H) continue;
+            if (pixel_to_paint_x < 0 || pixel_to_paint_y < 0 || pixel_to_paint_x >= FB_W ||
+                pixel_to_paint_y >= FB_H)
+                continue;
 
             int fb_index = RAM_FB_BASE + pixel_to_paint_y * FB_W + pixel_to_paint_x;
 
@@ -816,11 +848,8 @@ int main(int argc, char* argv[])
     }
 
     SDL_Window* win = SDL_CreateWindow(
-        "Fantasy VM (SDL2)",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        FB_W * RENDER_SCALE, FB_H * RENDER_SCALE,
-        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
-    );
+        "Fantasy VM (SDL2)", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, FB_W * RENDER_SCALE,
+        FB_H * RENDER_SCALE, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (!win)
     {
         fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());
@@ -828,10 +857,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    SDL_Renderer* ren = SDL_CreateRenderer(
-            win, -1,
-            SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
-    );
+    SDL_Renderer* ren =
+        SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!ren)
     {
         fprintf(stderr, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
@@ -840,12 +867,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    SDL_Texture* tex = SDL_CreateTexture(
-            ren,
-            SDL_PIXELFORMAT_ARGB8888,
-            SDL_TEXTUREACCESS_STREAMING,
-            FB_W, FB_H
-    );
+    SDL_Texture* tex =
+        SDL_CreateTexture(ren, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, FB_W, FB_H);
     if (!tex)
     {
         fprintf(stderr, "SDL_CreateTexture failed: %s\n", SDL_GetError());
@@ -890,7 +913,10 @@ int main(int argc, char* argv[])
                 running = false;
                 break;
             }
-            if (res == STEP_SYNC) { break; }
+            if (res == STEP_SYNC)
+            {
+                break;
+            }
             if (res == STEP_ERROR)
             {
                 fprintf(stderr, "VM encountered an error during execution\n");
@@ -898,15 +924,27 @@ int main(int argc, char* argv[])
                 break;
             }
         }
-        if (!running) { break; }
+        if (!running)
+        {
+            break;
+        }
 
         SDL_Event e;
         while (SDL_PollEvent(&e))
         {
-            if (e.type == SDL_QUIT) { running = false; }
-            if (e.type == SDL_KEYDOWN && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) { running = false; }
+            if (e.type == SDL_QUIT)
+            {
+                running = false;
+            }
+            if (e.type == SDL_KEYDOWN && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+            {
+                running = false;
+            }
         }
-        if (!running) { break; }
+        if (!running)
+        {
+            break;
+        }
 
         // TODO: Update input states in MIMO region of RAM
         // TODO: Render framebuffer from RAM to scratch_rgba
@@ -970,7 +1008,8 @@ int main(int argc, char* argv[])
             color_id &= 31; // Ensure color_id is within palette range
 
             Color col = palette[color_id];
-            scratch_rgba[i] = (uint32_t)((0xFF << 24) | (col.r << 16) | (col.g << 8) | (col.b)); // ARGB format
+            scratch_rgba[i] =
+                (uint32_t)((0xFF << 24) | (col.r << 16) | (col.g << 8) | (col.b)); // ARGB format
         }
 
         SDL_UpdateTexture(tex, NULL, scratch_rgba, FB_W * sizeof(uint32_t));

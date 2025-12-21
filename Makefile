@@ -34,6 +34,9 @@ clean:
 run: $(TARGET)
 	./$(TARGET)
 
+fmt:
+	clang-format -i $(SRCS) $(wildcard include/*.h)
+
 hooks:
 	git config core.hooksPath hooks
 
