@@ -9,7 +9,7 @@ The virtual machine exposes **three independent 16-bit address spaces**, each ra
 
 | Space | Name  | Purpose |
 |------|-------|---------|
-| ROMA | ROM Assets | Read-only asset storage (palette, audio samples, lookup tables, etc.) |
+| ROMA | ROM Assets | Read-only asset storage (audio samples, lookup tables, etc.) |
 | ROMB | ROM Bytecode | Read-only executable bytecode |
 | RAM  | RAM | Read-write working memory |
 
@@ -75,10 +75,7 @@ Opcodes: https://docs.google.com/spreadsheets/d/1KX17rRPHqwX_RdwbMEfj9ypyBbH-xKl
 
 #### Display Parameters
 - Fixed resolution: **180 × 136**
-- 1 byte per pixel
-- Each pixel stores a palette index
-- Palette size: **32 colors**
-- Only lower 5 bits of each pixel are used (`index & 0x1F`)
+- 1 byte per pixel (256 VGA colors)
 
 #### Framebuffer
 - Linear, row-major layout
@@ -217,13 +214,4 @@ Initial stack pointer: SP = 0xFFFF
 Out-of-bounds memory access is undefined behavior.
 
 ---
-
-### Fixed ROMA Layout
-
-| Address Range | Purpose |
-|--------------|---------|
-| `0x0000–0x003F` | Palette (32 × RGB565) |
-| `0x0040–0xFFFF` | Audio samples and other assets |
-
-ROMA is strictly read-only from the VM perspective.
 
