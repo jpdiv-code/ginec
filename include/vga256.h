@@ -10,6 +10,8 @@ typedef struct
     uint8_t b;
 } Color;
 
+// Standard VGA 256-color palette
+// Reference: https://www.ditig.com/256-colors-cheat-sheet
 Color palette[256] = {
     {0x00, 0x00, 0x00}, //   0
     {0x80, 0x00, 0x00}, //   1
