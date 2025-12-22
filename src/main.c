@@ -789,6 +789,22 @@ StepResult vm_step(VM* vm)
         break;
     }
 
+        // =====
+        // JUMPS
+        // =====
+
+    case ADD:
+    {
+        uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t reg_a = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t imm8 = vm->romb[vm->ip];
+        vm->ip++;
+        vm->reg[reg_dest] = vm->reg[reg_a] + imm8;
+        break;
+    }
+
     default:
         return STEP_ERROR;
     }
