@@ -1,200 +1,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include <SDL2/SDL.h>
 #include <string.h>
 #include <time.h>
 
-#include "roma.h"   // Include test ROMA data
-#include "vga256.h" // Include Color type and VGA256 palette
-
-// ==============================
-// VM CONSTANTS
-// ==============================
-
-#define REG_COUNT 4 // Number of general purpose registers
-
-#define ROMA_SIZE 65536 // Size of assets ROM
-#define ROMB_SIZE 65536 // Size of bytecode/binary ROM
-#define RAM_SIZE 65536  // Size of RAM
-
-#define MIMO_BASE 0x0000 // Base address for MIMO memory-mapped I/O
-#define MIMO_SIZE 0x0100 // Size of MIMO region
-
-#define MIMO_INPUT_DOWN 0x0000     // MIMO address for input down state
-#define MIMO_INPUT_PRESSED 0x0002  // MIMO address for input pressed state
-#define MIMO_INPUT_RELEASED 0x0004 // MIMO address for input released state
-
-#define RAM_FB_BASE 0x0100    // Base address for framebuffer in RAM
-#define FB_W 180              // Framebuffer width
-#define FB_H 136              // Framebuffer height
-#define FB_SIZE (FB_W * FB_H) // Framebuffer size
-
-#define RENDER_SCALE 4 // Scale factor for rendering
-
-#define VM_FRAME_DT (1.0f / 24.0f) // Fixed timestep for VM frame updates (24 FPS)
-
-// ==============================
-// INPUT BIT LAYOUT (12 buttons)
-// ==============================
-
-typedef enum
-{
-    BTN_UP = 0,
-    BTN_DOWN = 1,
-    BTN_LEFT = 2,
-    BTN_RIGHT = 3,
-    BTN_A = 4,
-    BTN_B = 5,
-    BTN_X = 6,
-    BTN_Y = 7,
-    BTN_L = 8,
-    BTN_R = 9,
-    BTN_START = 10,
-    BTN_SELECT = 11,
-} VmButtonBit;
-
-// ==============================
-// VM STRUCT
-// ==============================
-
-typedef struct VM
-{
-    uint16_t ip;             // Instruction pointer, targets romb
-    uint16_t sp;             // Stack pointer, targets ram
-    uint8_t flags;           // CPU flags: 0000VCNZ (Z=zero, N=negative, C=carry, V=overflow)
-    uint16_t reg[REG_COUNT]; // General purpose registers
-    uint8_t roma[ROMA_SIZE]; // Assets ROM (contains resources like images, sounds, etc)
-    uint8_t romb[ROMB_SIZE]; // Bytecode/binary ROM (contains program code)
-    uint8_t ram[RAM_SIZE];   // RAM (data memory)
-} VM;
-
-typedef enum
-{
-    STEP_OK = 0,
-    STEP_SYNC = 1,
-    STEP_HALT = 2,
-    STEP_ERROR = 3,
-} StepResult;
-
-// ==============================
-// OPCODES
-// ==============================
-
-enum
-{
-    // =====
-    // OTHER
-    // =====
-
-    OP_NOP = 0x00,
-    OP_HLT = 0x01,
-    OP_SYNC = 0x02,
-
-    OP_FILL = 0x04,  // 3 operands: RA RP RL, fill RAM region starting at address in RA with 8-bit
-                     // value in RP for RL bytes (4 byte-long instruction)
-    OP_FILLw = 0x05, // 3 operands: RA RP RL, fill RAM region starting at address in RA with 16-bit
-                     // value in RP for RL words (4 byte-long instruction)
-
-    OP_SEED = 0x07, // 1 operand: RS, seed the random number generator with the 16-bit value in RS
-                    // (2 byte-long instruction)
-    OP_RAND = 0x08, // 1 operand: RD, generate a random 16-bit value and store it in RD (2 byte-long
-                    // instruction)
-
-    // ===
-    // REG
-    // ===
-
-    OP_MOV = 0x0A, // 2 operands: RD RS, move value from RS to RD (3 byte-long instruction)
-
-    OP_LDI = 0x0C, // 2 operands: RD IMM8, load immediate 8-bit value into RD, zero-filled (3
-                   // byte-long instruction)
-    OP_LDIw =
-        0x0D, // 2 operands: RD IMM16, load immediate 16-bit value into RD (4 byte-long instruction)
-
-    // =====
-    // STACK
-    // =====
-
-    OP_PUSHI =
-        0x10, // 1 operand: IMM8, push immediate 8-bit value onto stack (2 byte-long instruction)
-    OP_PUSHIw =
-        0x11, // 1 operand: IMM16, push immediate 16-bit value onto stack (3 byte-long instruction)
-
-    OP_PUSH = 0x13,  // 1 operand: RS, push an 8-bit value from register onto stack (2 byte-long
-                     // instruction)
-    OP_PUSHw = 0x14, // 1 operand: RS, push a 16-bit value from register onto stack (2 byte-long
-                     // instruction)
-
-    OP_POP = 0x16,  // 1 operand: RD, pop an 8-bit value from stack into register, zero-filled (2
-                    // byte-long instruction)
-    OP_POPw = 0x17, // 1 operand: RD, pop a 16-bit value from stack into register (2 byte-long
-                    // instruction)
-
-    OP_SWP = 0x19,  // 0 operands, swap top two 8-bit values on stack (1 byte-long instruction)
-    OP_SWPw = 0x1A, // 0 operands, swap top two 16-bit values on stack (1 byte-long instruction)
-
-    OP_DUP = 0x1C,  // 0 operands, duplicate top 8-bit value on stack (1 byte-long instruction)
-    OP_DUPw = 0x1D, // 0 operands, duplicate top 16-bit value on stack (1 byte-long instruction)
-
-    // ===
-    // RAM
-    // ===
-
-    OP_LD = 0x20,  // 2 operands: RD addr, load 8-bit value from RAM at address in addr into RD,
-                   // zero-filled (4 byte-long instruction)
-    OP_LDw = 0x21, // 2 operands: RD addr, load 16-bit value from RAM at address in addr into RD (4
-                   // byte-long instruction)
-    OP_ST = 0x22,  // 2 operands: RS addr, store 8-bit value from RS into RAM at address in addr (4
-                   // byte-long instruction)
-    OP_STw = 0x23, // 2 operands: RS addr, store 16-bit value from RS into RAM at address in addr (4
-                   // byte-long instruction)
-
-    OP_LDR = 0x25,  // 2 operands: RD RA, load 8-bit value from RAM at address in RA into RD,
-                    // zero-filled (3 byte-long instruction)
-    OP_LDRw = 0x26, // 2 operands: RD RA, load 16-bit value from RAM at address in RA into RD (3
-                    // byte-long instruction)
-    OP_STR = 0x27,  // 2 operands: RS RA, store 8-bit value from RS into RAM at address in RA (3
-                    // byte-long instruction)
-    OP_STRw = 0x28, // 2 operands: RS RA, store 16-bit value from RS into RAM at address in RA (3
-                    // byte-long instruction)
-
-    OP_LDS = 0x2A, // 1 operand: RD, load 8-bit value from RAM at address popped from stack into RD,
-                   // zero-filled (2 byte-long instruction)
-    OP_LDSw = 0x2B, // 1 operand: RD, load 16-bit value from RAM at address popped from stack into
-                    // RD (2 byte-long instruction)
-    OP_STS = 0x2C, // 1 operand: RS, store 8-bit value from RS into RAM at address popped from stack
-                   // (2 byte-long instruction)
-    OP_STSw = 0x2D, // 1 operand: RS, store 16-bit value from RS into RAM at address popped from
-                    // stack (2 byte-long instruction)
-
-    // ====
-    // ROMA
-    // ====
-
-    OP_LDA = 0x30,  // 2 operands: RD addr, load 8-bit value from ROMA at address in addr into RD,
-                    // zero-filled (4 byte-long instruction)
-    OP_LDAw = 0x31, // 2 operands: RD addr, load 16-bit value from ROMA at address in addr into RD
-                    // (4 byte-long instruction)
-
-    OP_LDAR = 0x33,  // 2 operands: RD RA, load 8-bit value from ROMA at address in RA into RD,
-                     // zero-filled (3 byte-long instruction)
-    OP_LDARw = 0x34, // 2 operands: RD RA, load 16-bit value from ROMA at address in RA into RD (3
-                     // byte-long instruction)
-
-    OP_LDAS = 0x36,  // 1 operand: RD, load 8-bit value from ROMA at address popped from stack into
-                     // RD, zero-filled (2 byte-long instruction)
-    OP_LDASw = 0x37, // 1 operand: RD, load 16-bit value from ROMA at address popped from stack into
-                     // RD (2 byte-long instruction)
-
-    // =====
-    // JUMPS
-    // =====
-
-    OP_JMP = 0x70,
-};
+#include "opcodes.h" // Include opcode definitions
+#include "roma.h"    // Include test ROMA data
+#include "vga256.h"  // Include VGA256 palette
+#include "vm.h"      // Include VM definitions
 
 // ==============================
 // TIME UTILITIES
@@ -231,12 +46,6 @@ static void sleep_until(double target_time)
         }
     }
 }
-
-// ==============================
-// instruction execution
-// ==============================
-
-vm_step(&vm);
 
 // ==============================
 // DRAW UTILITIES

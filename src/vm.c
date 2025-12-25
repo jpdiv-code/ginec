@@ -1,7 +1,82 @@
-#ifndef INSTRUCTIONS_H
-#define INSTRUCTIONS_H
+#include "vm.h"
 
+#include <stdlib.h>
+#include <time.h>
 #include <stdint.h>
+
+#include "opcodes.h"
+
+#define FLAG_ZERO 0x01      // Z
+#define FLAG_NEGATIVE 0x02  // N
+#define FLAG_CARRY 0x04     // C
+#define FLAG_OVERFLOW 0x08  // V
+
+void set_flags_NZ(VM* vm, uint32_t res, uint32_t byte_mask)
+{
+    if (res < ((byte_mask + 1) >> 1))
+    {
+        vm->flags |= FLAG_NEGATIVE;
+    }
+    else
+    {
+        vm->flags &= ~FLAG_NEGATIVE;
+    }
+
+    if ((res & byte_mask) == 0)
+    {
+        vm->flags |= FLAG_ZERO;
+    }
+    else
+    {
+        vm->flags &= ~FLAG_ZERO;
+    }
+}
+
+void set_flags_on_ADD(VM* vm, uint32_t a, uint32_t b, uint32_t res, uint32_t byte_mask)
+{
+    if (res > byte_mask)
+    {
+        vm->flags |= FLAG_CARRY;
+    }
+    else
+    {
+        vm->flags &= ~FLAG_CARRY;
+    }
+
+    if (((~(a ^ b)) & (a ^ res) & byte_mask) != 0)
+    {
+        vm->flags |= FLAG_OVERFLOW;
+    }
+    else
+    {
+        vm->flags &= ~FLAG_OVERFLOW;
+    }
+
+    set_flags_NZ(vm, res, byte_mask);
+}
+
+void set_flags_on_SUB(VM* vm, uint32_t a, uint32_t b, uint32_t res, uint32_t byte_mask)
+{
+    if (a < b)
+    {
+        vm->flags |= FLAG_CARRY;
+    }
+    else
+    {
+        vm->flags &= ~FLAG_CARRY;
+    }
+
+    if (((a ^ b) & (a ^ res) & byte_mask) != 0)
+    {
+        vm->flags |= FLAG_OVERFLOW;
+    }
+    else
+    {
+        vm->flags &= ~FLAG_OVERFLOW;
+    }
+
+    set_flags_NZ(vm, res, byte_mask);
+}
 
 StepResult vm_step(VM* vm)
 {
@@ -539,43 +614,33 @@ StepResult vm_step(VM* vm)
     }
 
         // =====
-        // JUMPS
-        // =====
-
-    case OP_JMP:
-    {
-        uint8_t low = vm->romb[vm->ip];
-        vm->ip++;
-        uint8_t high = vm->romb[vm->ip];
-        uint16_t addr = 0x0000;
-        addr |= (uint16_t)low;
-        addr |= (uint16_t)(high << 8);
-        vm->ip = addr;
-        break;
-    }
-
-        // =====
-        // JUMPS
-        // =====
-
-        // =====
         // ARITHMETIC
         // =====
 
     case ADD:
     {
+        // uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
+        // vm->ip++;
+        // uint8_t reg_a = vm->romb[vm->ip] % REG_COUNT;
+        // vm->ip++;
+        // uint8_t imm8 = vm->romb[vm->ip];
+        // vm->ip++;
+        // uint16_t res16 = vm->reg[reg_a] + imm8;
+        // vm->reg[reg_dest] = (uint8_t)(res16 & 0xFF);
+        // set_flags_on_ADD(vm, vm->reg[reg_a], imm8, res16, 0xFF);
+        // break;
+
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
-        vm->ip++;
-        uint8_t reg_a = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint8_t imm8 = vm->romb[vm->ip];
         vm->ip++;
-        uint16_t res16 = vm->reg[reg_a] + imm8;
-        vm->reg[reg_dest] = (uint8_t)(res16 & 0xFF);
-        check_flags_addition(vm, vm->reg[reg_a], imm8, res16, 0xFF);
+        uint8_t res8 = (uint8_t)(vm->reg[reg_dest] & 0xFF) + imm8;
+        set_flags_on_ADD(vm, vm->reg[reg_dest], imm8, res8, 0xFF);
+        vm->reg[reg_dest] &= 0xFF00;
+        vm->reg[reg_dest] |= (uint16_t)res8;
         break;
     }
-    case ADD.w:
+    case ADDw:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
@@ -591,7 +656,7 @@ StepResult vm_step(VM* vm)
         uint32_t res32 = vm->reg[reg_a] + imm16;
         vm->reg[reg_dest] = (uint8_t)(res32 & 0xFF);
         vm->reg[(reg_dest + 1) % REG_COUNT] = (uint8_t)((res32 & 0xFF00) >> 8);
-        check_flags_addition(vm, vm->reg[reg_a], imm16, res32, 0xFFFF);
+        set_flags_on_ADD(vm, vm->reg[reg_a], imm16, res32, 0xFFFF);
         break;
     }
     case ADDR:
@@ -604,9 +669,10 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint16_t res16 = vm->reg[reg_a] + vm->reg[reg_b];
         vm->reg[reg_dest] = (uint8_t)(res16 & 0xFF);
-        check_flags_addition(vm, vm->reg[reg_a], vm->reg[reg_b], res16, 0xFF);
+        set_flags_on_ADD(vm, vm->reg[reg_a], vm->reg[reg_b], res16, 0xFF);
         break;
     }
+
     case SUB:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
@@ -617,10 +683,10 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint8_t res8 = vm->reg[reg_a] - imm8;
         vm->reg[reg_dest] = res8;
-        check_flags_subtraction(vm, vm->reg[reg_a], imm8, res8, 0xFF);
+        set_flags_on_SUB(vm, vm->reg[reg_a], imm8, res8, 0xFF);
         break;
     }
-    case SUB.w:
+    case SUBw:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
@@ -635,7 +701,7 @@ StepResult vm_step(VM* vm)
         imm16 |= (uint16_t)(high << 8);
         uint16_t res16 = vm->reg[reg_a] - imm16;
         vm->reg[reg_dest] = res16;
-        check_flags_subtraction(vm, vm->reg[reg_a], imm16, res16, 0xFFFF);
+        set_flags_on_SUB(vm, vm->reg[reg_a], imm16, res16, 0xFFFF);
         break;
     }
     case SUBR:
@@ -648,9 +714,10 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint8_t res8 = vm->reg[reg_a] - vm->reg[reg_b];
         vm->reg[reg_dest] = res8;
-        check_flags_subtraction(vm, vm->reg[reg_a], vm->reg[reg_b], res8, 0xFF);
+        set_flags_on_SUB(vm, vm->reg[reg_a], vm->reg[reg_b], res8, 0xFF);
         break;
     }
+
     case MUL:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
@@ -661,10 +728,10 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint16_t res16 = vm->reg[reg_a] * imm8;
         vm->reg[reg_dest] = res16;
-        check_flags_NEGATIVE_ZERO(vm, vm->reg[reg_a], imm8, res16, 0xFF);
+        set_flags_NZ(vm, res16, 0xFF);
         break;
     }
-    case MUL.w:
+    case MULw:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
@@ -679,7 +746,7 @@ StepResult vm_step(VM* vm)
         imm16 |= (uint16_t)(high << 8);
         uint16_t res16 = vm->reg[reg_a] * imm16;
         vm->reg[reg_dest] = res16;
-        check_flags_NEGATIVE_ZERO(vm, vm->reg[reg_a], imm16, res16, 0xFFFF);
+        set_flags_NZ(vm, res16, 0xFFFF);
         break;
     }
     case MULR:
@@ -692,59 +759,10 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint16_t res16 = vm->reg[reg_a] * vm->reg[reg_b];
         vm->reg[reg_dest] = res16;
-        check_flags_NEGATIVE_ZERO(vm, vm->reg[reg_a], vm->reg[reg_b], res16, 0xFF);
+        set_flags_NZ(vm, res16, 0xFF);
         break;
     }
-    // case DIV:
-    // {
-    //     uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
-    //     vm->ip++;
-    //     uint8_t reg_a = vm->romb[vm->ip] % REG_COUNT;
-    //     vm->ip++;
-    //     uint8_t imm8 = vm->romb[vm->ip];
-    //     vm->ip++;
-    //     if (imm8 == 0)
-    //     {
-    //         return STEP_ERROR; // Division by zero
-    //     }
-    //     vm->reg[reg_dest] = vm->reg[reg_a] / imm8;
-    //     break;
-    // }
-    // case DIV.w:
-    // {
-    //     uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
-    //     vm->ip++;
-    //     uint8_t reg_a = vm->romb[vm->ip] % REG_COUNT;
-    //     vm->ip++;
-    //     uint8_t low = vm->romb[vm->ip];
-    //     vm->ip++;
-    //     uint8_t high = vm->romb[vm->ip];
-    //     vm->ip++;
-    //     uint16_t imm16 = 0x0000;
-    //     imm16 |= (uint16_t)low;
-    //     imm16 |= (uint16_t)(high << 8);
-    //     if (imm16 == 0)
-    //     {
-    //         return STEP_ERROR; // Division by zero
-    //     }
-    //     vm->reg[reg_dest] = vm->reg[reg_a] / imm16;
-    //     break;
-    // }
-    // case DIVR:
-    // {
-    //     uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
-    //     vm->ip++;
-    //     uint8_t reg_a = vm->romb[vm->ip] % REG_COUNT;
-    //     vm->ip++;
-    //     uint8_t reg_b = vm->romb[vm->ip] % REG_COUNT;
-    //     vm->ip++;
-    //     if (vm->reg[reg_b] == 0)
-    //     {
-    //         return STEP_ERROR; // Division by zero
-    //     }
-    //     vm->reg[reg_dest] = vm->reg[reg_a] / vm->reg[reg_b];
-    //     break;
-    // }
+
     case CMP:
     {
         uint8_t reg_a = vm->romb[vm->ip] % REG_COUNT;
@@ -752,10 +770,10 @@ StepResult vm_step(VM* vm)
         uint8_t imm8 = vm->romb[vm->ip];
         vm->ip++;
         uint8_t result = vm->reg[reg_a] - imm8;
-        flag_checks_subtraction(vm, vm->reg[reg_a], imm8, result, 0xFF);
+        set_flags_on_SUB(vm, vm->reg[reg_a], imm8, result, 0xFF);
         break;
     }
-    case CMP.w:
+    case CMPw:
     {
         uint8_t reg_a = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
@@ -767,7 +785,7 @@ StepResult vm_step(VM* vm)
         imm16 |= (uint16_t)low;
         imm16 |= (uint16_t)(high << 8);
         uint16_t result = vm->reg[reg_a] - imm16;
-        flag_checks_subtraction(vm, vm->reg[reg_a], imm16, result, 0xFFFF);
+        set_flags_on_SUB(vm, vm->reg[reg_a], imm16, result, 0xFFFF);
         break;
     }
     case CMPR:
@@ -777,17 +795,18 @@ StepResult vm_step(VM* vm)
         uint8_t reg_b = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint8_t result = vm->reg[reg_a] - vm->reg[reg_b];
-        flag_checks_subtraction(vm, vm->reg[reg_a], vm->reg[reg_b], result, 0xFF);
+        set_flags_on_SUB(vm, vm->reg[reg_a], vm->reg[reg_b], result, 0xFF);
         break;
     }
+
     case INC:
     {
         uint8_t old = vm->reg[reg_dest];
         uint8_t res = old + 1;
         vm->ip++;
         vm->reg[reg_dest] = res;
-        check_flags_addition(vm, old, 1, res, 0xFF);
-        check_flags_NULL_ZERO(vm, res, 0xFF);
+        set_flags_on_ADD(vm, old, 1, res, 0xFF);
+        set_flags_NZ(vm, res, 0xFF);
         break;
     }
     case DEC:
@@ -796,14 +815,10 @@ StepResult vm_step(VM* vm)
         uint8_t res = old - 1;
         vm->ip++;
         vm->reg[reg_dest] = res;
-        check_flags_subtraction(vm, old, 1, res, 0xFF);
-        check_flags_NULL_ZERO(vm, res, 0xFF);
+        set_flags_on_SUB(vm, old, 1, res, 0xFF);
+        set_flags_NZ(vm, res, 0xFF);
         break;
     }
-
-        // =====
-        // ARITHMETIC
-        // =====
 
         // =====
         // LOGIC
@@ -818,10 +833,10 @@ StepResult vm_step(VM* vm)
         uint8_t imm8 = vm->romb[vm->ip];
         vm->ip++;
         vm->reg[reg_dest] = vm->reg[reg_a] & imm8;
-        check_flags_NULL_ZERO(vm, vm->reg[reg_dest], 0xFF);
+        set_flags_NZ(vm, vm->reg[reg_dest], 0xFF);
         break;
     }
-    case AND.w:
+    case ANDw:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
@@ -835,7 +850,7 @@ StepResult vm_step(VM* vm)
         imm16 |= (uint16_t)low;
         imm16 |= (uint16_t)(high << 8);
         vm->reg[reg_dest] = vm->reg[reg_a] & imm16;
-        check_flags_NULL_ZERO(vm, vm->reg[reg_dest], 0xFFFF);
+        set_flags_NZ(vm, vm->reg[reg_dest], 0xFFFF);
         break;
     }
     case ANDR:
@@ -847,9 +862,10 @@ StepResult vm_step(VM* vm)
         uint8_t reg_b = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         vm->reg[reg_dest] = vm->reg[reg_a] & vm->reg[reg_b];
-        check_flags_NULL_ZERO(vm, vm->reg[reg_dest], 0xFF);
+        set_flags_NZ(vm, vm->reg[reg_dest], 0xFF);
         break;
     }
+
     case OR:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
@@ -859,10 +875,10 @@ StepResult vm_step(VM* vm)
         uint8_t imm8 = vm->romb[vm->ip];
         vm->ip++;
         vm->reg[reg_dest] = vm->reg[reg_a] | imm8;
-        check_flags_NULL_ZERO(vm, vm->reg[reg_dest], 0xFF);
+        set_flags_NZ(vm, vm->reg[reg_dest], 0xFF);
         break;
     }
-    case OR.w:
+    case ORw:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
@@ -876,7 +892,7 @@ StepResult vm_step(VM* vm)
         imm16 |= (uint16_t)low;
         imm16 |= (uint16_t)(high << 8);
         vm->reg[reg_dest] = vm->reg[reg_a] | imm16;
-        check_flags_NULL_ZERO(vm, vm->reg[reg_dest], 0xFFFF);
+        set_flags_NZ(vm, vm->reg[reg_dest], 0xFFFF);
         break;
     }
     case ORR:
@@ -888,9 +904,10 @@ StepResult vm_step(VM* vm)
         uint8_t reg_b = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         vm->reg[reg_dest] = vm->reg[reg_a] | vm->reg[reg_b];
-        check_flags_NULL_ZERO(vm, vm->reg[reg_dest], 0xFF);
+        set_flags_NZ(vm, vm->reg[reg_dest], 0xFF);
         break;
     }
+
     case XOR:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
@@ -900,10 +917,10 @@ StepResult vm_step(VM* vm)
         uint8_t imm8 = vm->romb[vm->ip];
         vm->ip++;
         vm->reg[reg_dest] = vm->reg[reg_a] ^ imm8;
-        check_flags_NULL_ZERO(vm, vm->reg[reg_dest], 0xFF);
+        set_flags_NZ(vm, vm->reg[reg_dest], 0xFF);
         break;
     }
-    case XOR.w:
+    case XORw:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
@@ -917,7 +934,7 @@ StepResult vm_step(VM* vm)
         imm16 |= (uint16_t)low;
         imm16 |= (uint16_t)(high << 8);
         vm->reg[reg_dest] = vm->reg[reg_a] ^ imm16;
-        check_flags_NULL_ZERO(vm, vm->reg[reg_dest], 0xFFFF);
+        set_flags_NZ(vm, vm->reg[reg_dest], 0xFFFF);
         break;
     }
     case XORR:
@@ -929,9 +946,10 @@ StepResult vm_step(VM* vm)
         uint8_t reg_b = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         vm->reg[reg_dest] = vm->reg[reg_a] ^ vm->reg[reg_b];
-        check_flags_NULL_ZERO(vm, vm->reg[reg_dest], 0xFF);
+        set_flags_NZ(vm, vm->reg[reg_dest], 0xFF);
         break;
     }
+
     case SHL:
     {
         uint8_t reg_dest = vm->romb[vm->ip] % REG_COUNT;
@@ -976,6 +994,22 @@ StepResult vm_step(VM* vm)
     }
 
         // =====
+        // JUMPS
+        // =====
+
+    case OP_JMP:
+    {
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        uint16_t addr = 0x0000;
+        addr |= (uint16_t)low;
+        addr |= (uint16_t)(high << 8);
+        vm->ip = addr;
+        break;
+    }
+
+        // =====
         // UNKNOWN OPCODE
         // =====
 
@@ -986,71 +1020,3 @@ StepResult vm_step(VM* vm)
     return STEP_OK;
 }
 
-void check_flags_NEGATIVE_ZERO(VM* vm, uint32_t res, uint32_t byte_mask)
-{
-    if (res < ((byte_mask + 1) >> 1))
-    {
-        vm->flags |= FLAG_NEGATIVE;
-    }
-    else
-    {
-        vm->flags &= ~FLAG_NEGATIVE;
-    }
-
-    if ((res & byte_mask) == 0)
-    {
-        vm->flags |= FLAG_ZERO;
-    }
-    else
-    {
-        vm->flags &= ~FLAG_ZERO;
-    }
-}
-
-void check_flags_addition(VM* vm, uint32_t a, uint32_t b, uint32_t res, uint32_t byte_mask)
-{
-    if (res > byte_mask)
-    {
-        vm->flags |= FLAG_CARRY;
-    }
-    else
-    {
-        vm->flags &= ~FLAG_CARRY;
-    }
-
-    if (((~(a ^ b)) & (a ^ res) & byte_mask) != 0)
-    {
-        vm->flags |= FLAG_OVERFLOW;
-    }
-    else
-    {
-        vm->flags &= ~FLAG_OVERFLOW;
-    }
-
-    check_flags_NULL_ZERO(vm, res, byte_mask);
-}
-
-void check_flags_subtraction(VM* vm, uint32_t a, uint32_t b, uint32_t res, uint32_t byte_mask)
-{
-    if (a < b)
-    {
-        vm->flags |= FLAG_CARRY;
-    }
-    else
-    {
-        vm->flags &= ~FLAG_CARRY;
-    }
-
-    if (((a ^ b) & (a ^ res) & byte_mask) != 0)
-    {
-        vm->flags |= FLAG_OVERFLOW;
-    }
-    else
-    {
-        vm->flags &= ~FLAG_OVERFLOW;
-    }
-
-    check_flags_NULL_ZERO(vm, res, byte_mask);
-}
-
-#endif // INSTRUCTIONS_H
