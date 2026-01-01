@@ -59,7 +59,7 @@ void set_flags_on_SUB(VM* vm, uint32_t a, uint32_t b, uint32_t res, uint32_t byt
 {
     if (a < b)
     {
-        vm->flags |= FLAG_CARRY; // мы делаем отдельный флаг SUB BORROW?
+        vm->flags |= FLAG_CARRY;
     }
     else
     {
