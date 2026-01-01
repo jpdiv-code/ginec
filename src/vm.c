@@ -619,17 +619,6 @@ StepResult vm_step(VM* vm)
 
     case OP_ADD:
     {
-        // uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
-        // vm->ip++;
-        // uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
-        // vm->ip++;
-        // uint8_t imm8 = vm->romb[vm->ip];
-        // vm->ip++;
-        // uint16_t res16 = vm->reg[ra] + imm8;
-        // vm->reg[rd] = (uint8_t)(res16 & 0xFF);
-        // set_flags_on_ADD(vm, vm->reg[ra], imm8, res16, 0xFF);
-        // break;
-
         uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint8_t imm8 = vm->romb[vm->ip];
