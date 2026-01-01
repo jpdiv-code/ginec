@@ -195,13 +195,11 @@ int main(int argc, char* argv[])
         }
 
         // TODO: Update input states in MIMO region of RAM
-        // TODO: Render framebuffer from RAM to scratch_rgba
-        // TODO: Render scratch_rgba to texture and present
+
 
         // ==============================
         // buffer rendering demo code
         // ==============================
-
         // memset(&vm.ram[RAM_FB_BASE], 0, FB_SIZE); // Clear framebuffer for demonstration
 
         // for (int i = 0; i < FB_SIZE; i++)
