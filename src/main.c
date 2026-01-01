@@ -198,25 +198,6 @@ int main(int argc, char* argv[])
 
 
         // ==============================
-        // buffer rendering demo code
-        // ==============================
-        // memset(&vm.ram[RAM_FB_BASE], 0, FB_SIZE); // Clear framebuffer for demonstration
-
-        // for (int i = 0; i < FB_SIZE; i++)
-        // {
-        //     vm.ram[RAM_FB_BASE + i] = 1;
-        // }
-
-        // for (int i = 0; i < FB_SIZE; i++)
-        // {
-        //     uint8_t color_id = vm.ram[RAM_FB_BASE + i];
-
-        //     Color col = palette[color_id];
-        //     scratch_rgba[i] = (0xFF << 24) | (col.r << 16) | (col.g << 8) | (col.b); // ARGB
-        //     format
-        // }
-
-        // ==============================
         // drawing sprite RU_I demo code
         // ==============================
 
