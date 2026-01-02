@@ -115,8 +115,8 @@ enum
     // ALU
     // ===
 
-    OP_ADD = 0x40, // 2 operands: RD imm8, add immediate 8-bit value to RD, ignoring high byte in RD
-                   // (3 byte-long instruction)
+    OP_ADD = 0x40, // 2 operands: RD imm8, add immediate 8-bit value to the low byte of RD,
+                   // preserving the high byte in RD (3 byte-long instruction)
     OP_SUB = 0x41, // 2 operands: RD imm8, subtract immediate 8-bit value from RD, ignoring high
                    // byte in RD (3 byte-long instruction)
     OP_MUL = 0x42, // 2 operands: RD imm8, multiply RD by immediate 8-bit value, ignoring high byte
