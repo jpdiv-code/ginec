@@ -1,4 +1,4 @@
-| ƒ | mnemonic | operands | bytes | pseudocode | description | section |
+| hex | mnemonic | operands | bytes | pseudocode | description | section |
 | --- | --- | --- | --- | --- | --- | --- |
 | 0 | NOP |  | 1 |  | no operation | OTHER |
 | 1 |  |  |  |  |  |  |
