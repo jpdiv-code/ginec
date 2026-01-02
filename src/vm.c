@@ -781,7 +781,6 @@ StepResult vm_step(VM* vm)
         uint16_t res16 = original + 1;
         vm->reg[rd] = res16;
         set_flags_on_ADD(vm, original, 1, res16, 0xFF);
-        set_flags_NZ(vm, res16, 0xFF);
         break;
     }
     case OP_DEC:
