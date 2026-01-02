@@ -154,18 +154,24 @@ enum
     OP_CMPR = 0x56, // 2 operands: RD RS, compare RD with register RS, set flags accordingly (3
                     // byte-long instruction)
 
-    OP_SHL = 0x58, // 2 operands: RD imm8, logical shift left RD by immediate 8-bit value (3
-                   // byte-long instruction)
-    OP_SHR = 0x59, // 2 operands: RD imm8, logical shift right RD by immediate 8-bit value (3
-                   // byte-long instruction)
-    OP_ASR = 0x5A, // 2 operands: RD imm8, arithmetic shift right RD by immediate 8-bit value (3
-                   // byte-long instruction)
+    OP_SHL = 0x58,  // 2 operands: RD imm8, logical shift left RD by immediate 8-bit value (3
+                    // byte-long instruction)
+    OP_SHLw = 0x59, // 2 operands: RD imm16, logical shift left RD by immediate 16-bit value (4
+                    // byte-long instruction)
+    OP_SHR = 0x5A,  // 2 operands: RD imm8, logical shift right RD by immediate 8-bit value (3
+                    // byte-long instruction)
+    OP_SHRw = 0x5B, // 2 operands: RD imm16, logical shift right RD by immediate 16-bit value (4
+                    // byte-long instruction)
+    OP_ASR = 0x5C,  // 2 operands: RD imm8, arithmetic shift right RD by immediate 8-bit value (3
+                    // byte-long instruction)
+    OP_ASRw = 0x5D, // 2 operands: RD imm16, arithmetic shift right RD by immediate 16-bit value (4
+                    // byte-long instruction)
 
-    OP_INC = 0x5C, // 1 operand: RD, increment RD (2 byte-long instruction)
-    OP_DEC = 0x5D, // 1 operand: RD, decrement RD (2 byte-long instruction)
+    OP_INC = 0x5E, // 1 operand: RD, increment RD (2 byte-long instruction)
+    OP_DEC = 0x5F, // 1 operand: RD, decrement RD (2 byte-long instruction)
 
     OP_NOT =
-        0x5F, // 1 operand: RD, bitwise NOT RD, ignoring high byte in RD (2 byte-long instruction)
+        0x60, // 1 operand: RD, bitwise NOT RD, ignoring high byte in RD (2 byte-long instruction)
 
     // =====
     // JUMPS
