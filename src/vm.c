@@ -651,9 +651,10 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
-        uint16_t res16 = vm->reg[ra] + vm->reg[rd];
-        vm->reg[rd] = res16;
-        set_flags_on_ADD(vm, vm->reg[ra], vm->reg[rd], res16, 0xFFFF);
+        uint16_t rd_val = vm->reg[rd];
+        uint32_t res32 = (uint32_t)vm->reg[ra] + (uint32_t)rd_val;
+        vm->reg[rd] = (uint16_t)(res32 & 0xFFFF);
+        set_flags_on_ADD(vm, vm->reg[ra], rd_val, res32, 0xFFFF);
         break;
     }
 
