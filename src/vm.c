@@ -13,7 +13,7 @@
 
 void set_flags_NZ(VM* vm, uint32_t res, uint32_t byte_mask)
 {
-    if (res < ((byte_mask + 1) >> 1))
+    if ((res & ((byte_mask + 1u) >> 1)) != 0)
     {
         vm->flags |= FLAG_NEGATIVE;
     }
