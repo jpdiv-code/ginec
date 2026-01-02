@@ -920,7 +920,7 @@ StepResult vm_step(VM* vm)
         uint8_t reg_b = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         vm->reg[rd] = vm->reg[ra] ^ vm->reg[reg_b];
-        set_flags_NZ(vm, vm->reg[rd], 0xFF);
+        set_flags_NZ(vm, vm->reg[rd], 0xFFFF);
         break;
     }
 
