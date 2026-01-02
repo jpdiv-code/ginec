@@ -777,9 +777,10 @@ StepResult vm_step(VM* vm)
     {
         uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
-        uint16_t res16 = vm->reg[rd] + 1;
+        uint16_t original = vm->reg[rd];
+        uint16_t res16 = original + 1;
         vm->reg[rd] = res16;
-        set_flags_on_ADD(vm, vm->reg[rd], 1, res16, 0xFF);
+        set_flags_on_ADD(vm, original, 1, res16, 0xFF);
         set_flags_NZ(vm, res16, 0xFF);
         break;
     }
