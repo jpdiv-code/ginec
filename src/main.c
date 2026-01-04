@@ -142,11 +142,49 @@ int main(int argc, char* argv[])
     vm.ip = 0x0000;
     vm.sp = 0xFFFF;
     // TODO: Load ROMA and ROMB from some source
-    // For now, just fill ROMB with a simple program that does nothing
-    vm.romb[0x0000] = OP_SYNC;
-    vm.romb[0x0001] = OP_JMP;
-    vm.romb[0x0002] = 0x00;
-    vm.romb[0x0003] = 0x00;
+
+    // Example program that fills random pixel with random color
+
+    // Seed random generator
+    vm.romb[0x0000] = OP_LDIw;
+    vm.romb[0x0001] = 0;    // reg 0
+    vm.romb[0x0002] = 0xFF; // low byte
+    vm.romb[0x0003] = 0x00; // high byte (seed = 0x00FF)
+    vm.romb[0x0004] = OP_SEED;
+    vm.romb[0x0005] = 0; // seed from reg 0
+
+    // Loop: generate random pixel address in framebuffer range
+    vm.romb[0x0006] = OP_RANDw;
+    vm.romb[0x0007] = 0; // reg 0 = random 16-bit value
+
+    // Mask to limit offset to ~24480 (framebuffer size)
+    // 0x5FFF = 24575, close to 24480
+    vm.romb[0x0008] = OP_ANDw;
+    vm.romb[0x0009] = 0;    // reg 0
+    vm.romb[0x000A] = 0xFF; // low byte mask
+    vm.romb[0x000B] = 0x5F; // high byte mask (0x5FFF)
+
+    // Add framebuffer base address (0x0100)
+    vm.romb[0x000C] = OP_ADDw;
+    vm.romb[0x000D] = 0;    // reg 0
+    vm.romb[0x000E] = 0x00; // low byte of 0x0100
+    vm.romb[0x000F] = 0x01; // high byte of 0x0100
+    // Now reg 0 = random address in framebuffer
+
+    // Generate random color
+    vm.romb[0x0010] = OP_RAND;
+    vm.romb[0x0011] = 1; // reg 1 = random 8-bit color
+
+    // Store color at address
+    vm.romb[0x0012] = OP_STR;
+    vm.romb[0x0013] = 0; // address in reg 0
+    vm.romb[0x0014] = 1; // color in reg 1
+
+    // Sync and loop
+    vm.romb[0x0015] = OP_SYNC;
+    vm.romb[0x0016] = OP_JMP;
+    vm.romb[0x0017] = 0x06; // low byte of loop address
+    vm.romb[0x0018] = 0x00; // high byte of loop address
 
     bool running = true;
     double next_frame_time = now_seconds() + VM_FRAME_DT;
@@ -196,35 +234,34 @@ int main(int argc, char* argv[])
 
         // TODO: Update input states in MIMO region of RAM
 
-
         // ==============================
         // drawing sprite RU_I demo code
         // ==============================
 
-        memset(&vm.ram[RAM_FB_BASE], 0, FB_SIZE); // Clear framebuffer for demonstration
+        // memset(&vm.ram[RAM_FB_BASE], 0, FB_SIZE); // Clear framebuffer for demonstration
 
-        uint16_t offset = 1;
+        // uint16_t offset = 1;
 
-        draw_sprite(&vm, offset, 1, 1, 8, 8); // Draw sprite RU_I
-        offset += 8;
-        draw_sprite(&vm, offset, 1, 2, 8, 8); // Draw sprite RU_L
-        offset += 8;
-        draw_sprite(&vm, offset, 1, 3, 8, 8); // Draw sprite RU_U
-        offset += 8;
-        draw_sprite(&vm, offset, 1, 4, 8, 8); // Draw sprite RU_SH
-        offset += 8;
-        draw_sprite(&vm, offset, 1, 5, 8, 8); // Draw sprite RU_A
-        offset += 16;
+        // draw_sprite(&vm, offset, 1, 1, 8, 8); // Draw sprite RU_I
+        // offset += 8;
+        // draw_sprite(&vm, offset, 1, 2, 8, 8); // Draw sprite RU_L
+        // offset += 8;
+        // draw_sprite(&vm, offset, 1, 3, 8, 8); // Draw sprite RU_U
+        // offset += 8;
+        // draw_sprite(&vm, offset, 1, 4, 8, 8); // Draw sprite RU_SH
+        // offset += 8;
+        // draw_sprite(&vm, offset, 1, 5, 8, 8); // Draw sprite RU_A
+        // offset += 16;
 
-        draw_sprite(&vm, offset, 1, 4, 8, 8); // Draw sprite RU_SH
-        offset += 8;
-        draw_sprite(&vm, offset, 1, 2, 8, 8); // Draw sprite RU_L
-        offset += 8;
-        draw_sprite(&vm, offset, 1, 3, 8, 8); // Draw sprite RU_U
-        offset += 8;
-        draw_sprite(&vm, offset, 1, 4, 8, 8); // Draw sprite RU_SH
-        offset += 8;
-        draw_sprite(&vm, offset, 1, 5, 8, 8); // Draw sprite RU_A
+        // draw_sprite(&vm, offset, 1, 4, 8, 8); // Draw sprite RU_SH
+        // offset += 8;
+        // draw_sprite(&vm, offset, 1, 2, 8, 8); // Draw sprite RU_L
+        // offset += 8;
+        // draw_sprite(&vm, offset, 1, 3, 8, 8); // Draw sprite RU_U
+        // offset += 8;
+        // draw_sprite(&vm, offset, 1, 4, 8, 8); // Draw sprite RU_SH
+        // offset += 8;
+        // draw_sprite(&vm, offset, 1, 5, 8, 8); // Draw sprite RU_A
 
         for (int i = 0; i < FB_SIZE; i++)
         {
