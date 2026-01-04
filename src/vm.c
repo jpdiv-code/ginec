@@ -111,11 +111,11 @@ StepResult vm_step(VM* vm)
 
     case OP_NOP:
         break;
+
     case OP_HLT:
         return STEP_HALT;
     case OP_SYNC:
         return STEP_SYNC;
-
     case OP_FILL:
     {
         uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
@@ -171,6 +171,14 @@ StepResult vm_step(VM* vm)
     {
         uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
+        uint8_t rand_val = (uint8_t)(rand() & 0xFF);
+        vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (rand_val & 0x00FF);
+        break;
+    }
+    case OP_RANDw:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
         uint16_t rand_val = (uint16_t)(rand() & 0xFFFF);
         vm->reg[rd] = rand_val;
         break;
@@ -186,6 +194,16 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
+        uint8_t low = (uint8_t)(vm->reg[rs] & 0x00FF);
+        vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (low & 0x00FF);
+        break;
+    }
+    case OP_MOVw:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
         vm->reg[rd] = vm->reg[rs];
         break;
     }
@@ -195,7 +213,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint8_t imm8 = vm->romb[vm->ip];
         vm->ip++;
-        vm->reg[rd] = (uint16_t)imm8;
+        vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (imm8 & 0x00FF);
         break;
     }
     case OP_LDIw:
@@ -210,6 +228,18 @@ StepResult vm_step(VM* vm)
         imm16 |= (uint16_t)low;
         imm16 |= (uint16_t)(high << 8);
         vm->reg[rd] = imm16;
+        break;
+    }
+    case OP_SRB:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t low = (uint8_t)(vm->reg[rd] & 0x00FF);
+        uint8_t high = (uint8_t)((vm->reg[rd] >> 8) & 0x00FF);
+        uint16_t swapped = 0x0000;
+        swapped |= (uint16_t)low << 8;
+        swapped |= (uint16_t)high;
+        vm->reg[rd] = swapped;
         break;
     }
 
@@ -237,7 +267,6 @@ StepResult vm_step(VM* vm)
         vm->sp--;
         break;
     }
-
     case OP_PUSH:
     {
         uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
@@ -267,7 +296,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         vm->sp++;
         uint8_t val8 = vm->ram[vm->sp];
-        vm->reg[rd] = (uint16_t)val8;
+        vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
     case OP_POPw:
@@ -342,6 +371,14 @@ StepResult vm_step(VM* vm)
         break;
     }
 
+    case OP_ADJSP:
+    {
+        int8_t imm8 = (int8_t)vm->romb[vm->ip];
+        vm->ip++;
+        vm->sp = (uint16_t)((int32_t)vm->sp + imm8);
+        break;
+    }
+
         // ===
         // RAM
         // ===
@@ -358,7 +395,7 @@ StepResult vm_step(VM* vm)
         addr |= (uint16_t)low;
         addr |= (uint16_t)(high << 8);
         uint8_t val8 = vm->ram[addr];
-        vm->reg[rd] = (uint16_t)val8;
+        vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
     case OP_LDw:
@@ -382,11 +419,11 @@ StepResult vm_step(VM* vm)
     }
     case OP_ST:
     {
-        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
-        vm->ip++;
         uint8_t low = vm->romb[vm->ip];
         vm->ip++;
         uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint16_t addr = 0x0000;
         addr |= (uint16_t)low;
@@ -397,11 +434,11 @@ StepResult vm_step(VM* vm)
     }
     case OP_STw:
     {
-        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
-        vm->ip++;
         uint8_t low = vm->romb[vm->ip];
         vm->ip++;
         uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint16_t addr = 0x0000;
         addr |= (uint16_t)low;
@@ -422,7 +459,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint16_t addr = vm->reg[ra];
         uint8_t val8 = vm->ram[addr];
-        vm->reg[rd] = (uint16_t)val8;
+        vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
     case OP_LDRw:
@@ -442,9 +479,9 @@ StepResult vm_step(VM* vm)
     }
     case OP_STR:
     {
-        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
-        vm->ip++;
         uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint16_t addr = vm->reg[ra];
         uint8_t val8 = (uint8_t)(vm->reg[rs] & 0x00FF);
@@ -453,9 +490,9 @@ StepResult vm_step(VM* vm)
     }
     case OP_STRw:
     {
-        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
-        vm->ip++;
         uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint16_t addr = vm->reg[ra];
         uint16_t val16 = vm->reg[rs];
@@ -466,32 +503,28 @@ StepResult vm_step(VM* vm)
         break;
     }
 
-    case OP_LDS:
+    case OP_LDRI:
     {
         uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
-        vm->sp++;
-        uint8_t low = vm->ram[vm->sp];
-        vm->sp++;
-        uint8_t high = vm->ram[vm->sp];
-        uint16_t addr = 0x0000;
-        addr |= (uint16_t)low;
-        addr |= (uint16_t)(high << 8);
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        int8_t off8 = (int8_t)vm->romb[vm->ip];
+        vm->ip++;
+        uint16_t addr = vm->reg[ra] + off8;
         uint8_t val8 = vm->ram[addr];
-        vm->reg[rd] = (uint16_t)val8;
+        vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
-    case OP_LDSw:
+    case OP_LDRIw:
     {
         uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
-        vm->sp++;
-        uint8_t low = vm->ram[vm->sp];
-        vm->sp++;
-        uint8_t high = vm->ram[vm->sp];
-        uint16_t addr = 0x0000;
-        addr |= (uint16_t)low;
-        addr |= (uint16_t)(high << 8);
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        int8_t off8 = (int8_t)vm->romb[vm->ip];
+        vm->ip++;
+        uint16_t addr = vm->reg[ra] + off8;
         uint8_t low_val = vm->ram[addr];
         uint8_t high_val = vm->ram[addr + 1];
         uint16_t val16 = 0x0000;
@@ -500,32 +533,28 @@ StepResult vm_step(VM* vm)
         vm->reg[rd] = val16;
         break;
     }
-    case OP_STS:
+    case OP_STRI:
     {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        int8_t off8 = (int8_t)vm->romb[vm->ip];
+        vm->ip++;
         uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
-        vm->sp++;
-        uint8_t low = vm->ram[vm->sp];
-        vm->sp++;
-        uint8_t high = vm->ram[vm->sp];
-        uint16_t addr = 0x0000;
-        addr |= (uint16_t)low;
-        addr |= (uint16_t)(high << 8);
+        uint16_t addr = vm->reg[ra] + off8;
         uint8_t val8 = (uint8_t)(vm->reg[rs] & 0x00FF);
         vm->ram[addr] = val8;
         break;
     }
-    case OP_STSw:
+    case OP_STRIw:
     {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        int8_t off8 = (int8_t)vm->romb[vm->ip];
+        vm->ip++;
         uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
-        vm->sp++;
-        uint8_t low = vm->ram[vm->sp];
-        vm->sp++;
-        uint8_t high = vm->ram[vm->sp];
-        uint16_t addr = 0x0000;
-        addr |= (uint16_t)low;
-        addr |= (uint16_t)(high << 8);
+        uint16_t addr = vm->reg[ra] + off8;
         uint16_t val16 = vm->reg[rs];
         uint8_t low_val = (uint8_t)(val16 & 0x00FF);
         uint8_t high_val = (uint8_t)((val16 >> 8) & 0x00FF);
@@ -550,7 +579,7 @@ StepResult vm_step(VM* vm)
         addr |= (uint16_t)low;
         addr |= (uint16_t)(high << 8);
         uint8_t val8 = vm->roma[addr];
-        vm->reg[rd] = (uint16_t)val8;
+        vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
     case OP_LDAw:
@@ -581,7 +610,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint16_t addr = vm->reg[ra];
         uint8_t val8 = vm->roma[addr];
-        vm->reg[rd] = (uint16_t)val8;
+        vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
     case OP_LDARw:
@@ -591,41 +620,6 @@ StepResult vm_step(VM* vm)
         uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint16_t addr = vm->reg[ra];
-        uint8_t low_val = vm->roma[addr];
-        uint8_t high_val = vm->roma[addr + 1];
-        uint16_t val16 = 0x0000;
-        val16 |= (uint16_t)low_val;
-        val16 |= (uint16_t)(high_val << 8);
-        vm->reg[rd] = val16;
-        break;
-    }
-
-    case OP_LDAS:
-    {
-        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
-        vm->ip++;
-        vm->sp++;
-        uint8_t low = vm->ram[vm->sp];
-        vm->sp++;
-        uint8_t high = vm->ram[vm->sp];
-        uint16_t addr = 0x0000;
-        addr |= (uint16_t)low;
-        addr |= (uint16_t)(high << 8);
-        uint8_t val8 = vm->roma[addr];
-        vm->reg[rd] = (uint16_t)val8;
-        break;
-    }
-    case OP_LDASw:
-    {
-        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
-        vm->ip++;
-        vm->sp++;
-        uint8_t low = vm->ram[vm->sp];
-        vm->sp++;
-        uint8_t high = vm->ram[vm->sp];
-        uint16_t addr = 0x0000;
-        addr |= (uint16_t)low;
-        addr |= (uint16_t)(high << 8);
         uint8_t low_val = vm->roma[addr];
         uint8_t high_val = vm->roma[addr + 1];
         uint16_t val16 = 0x0000;
@@ -1092,7 +1086,7 @@ StepResult vm_step(VM* vm)
         uint8_t shift = vm->romb[vm->ip] % MAX_BYTE_SHIFT;
         vm->ip++;
         uint8_t low = (uint8_t)(vm->reg[rd] & 0x00FF);
-        uint16_t res16 = (uint16_t)low << shift;
+        uint16_t res16 = (uint16_t)((uint16_t)low << shift);
         set_flags_NZ(vm, (uint32_t)res16, 0x00FF);
         vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (res16 & 0x00FF);
         break;
@@ -1158,6 +1152,15 @@ StepResult vm_step(VM* vm)
         break;
     }
 
+    case OP_SEXT8w:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        int8_t low = (int8_t)(vm->reg[rd] & 0x00FF);
+        vm->reg[rd] = (uint16_t)(int16_t)low;
+        break;
+    }
+
         // =====
         // JUMPS
         // =====
@@ -1170,6 +1173,211 @@ StepResult vm_step(VM* vm)
         uint16_t addr = 0x0000;
         addr |= (uint16_t)low;
         addr |= (uint16_t)(high << 8);
+        vm->ip = addr;
+        break;
+    }
+    case OP_JZ:
+    {
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        if (vm->flags & FLAG_ZERO)
+        {
+            uint16_t addr = 0x0000;
+            addr |= (uint16_t)low;
+            addr |= (uint16_t)(high << 8);
+            vm->ip = addr;
+        }
+        break;
+    }
+    case OP_JNZ:
+    {
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        if (!(vm->flags & FLAG_ZERO))
+        {
+            uint16_t addr = 0x0000;
+            addr |= (uint16_t)low;
+            addr |= (uint16_t)(high << 8);
+            vm->ip = addr;
+        }
+        break;
+    }
+    case OP_JC:
+    {
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        if (vm->flags & FLAG_CARRY)
+        {
+            uint16_t addr = 0x0000;
+            addr |= (uint16_t)low;
+            addr |= (uint16_t)(high << 8);
+            vm->ip = addr;
+        }
+        break;
+    }
+    case OP_JNC:
+    {
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        if (!(vm->flags & FLAG_CARRY))
+        {
+            uint16_t addr = 0x0000;
+            addr |= (uint16_t)low;
+            addr |= (uint16_t)(high << 8);
+            vm->ip = addr;
+        }
+        break;
+    }
+    case OP_JLT:
+    {
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t n = (vm->flags & FLAG_NEGATIVE) ? 1 : 0;
+        uint8_t v = (vm->flags & FLAG_OVERFLOW) ? 1 : 0;
+        if (n != v)
+        {
+            uint16_t addr = 0x0000;
+            addr |= (uint16_t)low;
+            addr |= (uint16_t)(high << 8);
+            vm->ip = addr;
+        }
+        break;
+    }
+    case OP_JGE:
+    {
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t n = (vm->flags & FLAG_NEGATIVE) ? 1 : 0;
+        uint8_t v = (vm->flags & FLAG_OVERFLOW) ? 1 : 0;
+        if (n == v)
+        {
+            uint16_t addr = 0x0000;
+            addr |= (uint16_t)low;
+            addr |= (uint16_t)(high << 8);
+            vm->ip = addr;
+        }
+        break;
+    }
+
+    case OP_JMPR:
+    {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        vm->ip = vm->reg[ra];
+        break;
+    }
+    case OP_JZR:
+    {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        if (vm->flags & FLAG_ZERO)
+        {
+            vm->ip = vm->reg[ra];
+        }
+        break;
+    }
+    case OP_JNZR:
+    {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        if (!(vm->flags & FLAG_ZERO))
+        {
+            vm->ip = vm->reg[ra];
+        }
+        break;
+    }
+    case OP_JCR:
+    {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        if (vm->flags & FLAG_CARRY)
+        {
+            vm->ip = vm->reg[ra];
+        }
+        break;
+    }
+    case OP_JNCR:
+    {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        if (!(vm->flags & FLAG_CARRY))
+        {
+            vm->ip = vm->reg[ra];
+        }
+        break;
+    }
+    case OP_JLTR:
+    {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t n = (vm->flags & FLAG_NEGATIVE) ? 1 : 0;
+        uint8_t v = (vm->flags & FLAG_OVERFLOW) ? 1 : 0;
+        if (n != v)
+        {
+            vm->ip = vm->reg[ra];
+        }
+        break;
+    }
+    case OP_JGER:
+    {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t n = (vm->flags & FLAG_NEGATIVE) ? 1 : 0;
+        uint8_t v = (vm->flags & FLAG_OVERFLOW) ? 1 : 0;
+        if (n == v)
+        {
+            vm->ip = vm->reg[ra];
+        }
+        break;
+    }
+
+        // =====
+        // CALLS
+        // =====
+
+    case OP_CALL:
+    {
+        uint8_t low = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t high = vm->romb[vm->ip];
+        vm->ip++;
+        uint16_t addr = 0x0000;
+        addr |= (uint16_t)low;
+        addr |= (uint16_t)(high << 8);
+        uint16_t ret_addr = vm->ip;
+        uint8_t ret_low = (uint8_t)(ret_addr & 0x00FF);
+        uint8_t ret_high = (uint8_t)((ret_addr >> 8) & 0x00FF);
+        vm->ram[vm->sp] = ret_high;
+        vm->sp--;
+        vm->ram[vm->sp] = ret_low;
+        vm->sp--;
+        vm->ip = addr;
+        break;
+    }
+    case OP_CALLR:
+    {
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint16_t addr = vm->reg[ra];
+        uint16_t ret_addr = vm->ip;
+        uint8_t ret_low = (uint8_t)(ret_addr & 0x00FF);
+        uint8_t ret_high = (uint8_t)((ret_addr >> 8) & 0x00FF);
+        vm->ram[vm->sp] = ret_high;
+        vm->sp--;
+        vm->ram[vm->sp] = ret_low;
+        vm->sp--;
         vm->ip = addr;
         break;
     }

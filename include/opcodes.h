@@ -5,51 +5,61 @@ enum
 {
     // OTHER
     OP_NOP = 0x00,
+
     OP_HLT = 0x02,
     OP_SYNC = 0x03,
     OP_FILL = 0x04,
     OP_FILLw = 0x05,
     OP_SEED = 0x06,
     OP_RAND = 0x07,
+    OP_RANDw = 0x08,
 
     // REG
     OP_MOV = 0x0A,
+    OP_MOVw = 0x0B,
     OP_LDI = 0x0C,
     OP_LDIw = 0x0D,
+    OP_SRB = 0x0E,
 
     // STACK
     OP_PUSHI = 0x10,
     OP_PUSHIw = 0x11,
     OP_PUSH = 0x12,
     OP_PUSHw = 0x13,
+
     OP_POP = 0x15,
     OP_POPw = 0x16,
+
     OP_SWP = 0x18,
     OP_SWPw = 0x19,
+
     OP_DUP = 0x1B,
     OP_DUPw = 0x1C,
+
+    OP_ADJSP = 0x1E,
 
     // RAM
     OP_LD = 0x20,
     OP_LDw = 0x21,
     OP_ST = 0x22,
     OP_STw = 0x23,
+
     OP_LDR = 0x25,
     OP_LDRw = 0x26,
     OP_STR = 0x27,
     OP_STRw = 0x28,
-    OP_LDS = 0x2A,
-    OP_LDSw = 0x2B,
-    OP_STS = 0x2C,
-    OP_STSw = 0x2D,
+
+    OP_LDRI = 0x2A,
+    OP_LDRIw = 0x2B,
+    OP_STRI = 0x2C,
+    OP_STRIw = 0x2D,
 
     // ROMA
     OP_LDA = 0x30,
     OP_LDAw = 0x31,
+
     OP_LDAR = 0x33,
     OP_LDARw = 0x34,
-    OP_LDAS = 0x36,
-    OP_LDASw = 0x37,
 
     // ALU
     OP_ADD = 0x40,
@@ -98,8 +108,28 @@ enum
     OP_ASR = 0x6B,
     OP_ASRw = 0x6C,
 
+    OP_SEXT8w = 0x6E,
+
     // JUMPS
     OP_JMP = 0x70,
+    OP_JZ = 0x71,
+    OP_JNZ = 0x72,
+    OP_JC = 0x73,
+    OP_JNC = 0x74,
+    OP_JLT = 0x75,
+    OP_JGE = 0x76,
+
+    OP_JMPR = 0x78,
+    OP_JZR = 0x79,
+    OP_JNZR = 0x7A,
+    OP_JCR = 0x7B,
+    OP_JNCR = 0x7C,
+    OP_JLTR = 0x7D,
+    OP_JGER = 0x7E,
+
+    // CALLS
+    OP_CALL = 0x90,
+    OP_CALLR = 0x91,
 };
 
 #endif // OPCODES_H
