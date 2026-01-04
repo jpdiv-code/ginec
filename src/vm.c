@@ -511,7 +511,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         int8_t off8 = (int8_t)vm->romb[vm->ip];
         vm->ip++;
-        uint16_t addr = vm->reg[ra] + off8;
+        uint16_t addr = (uint16_t)(vm->reg[ra] + off8);
         uint8_t val8 = vm->ram[addr];
         vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
@@ -524,7 +524,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         int8_t off8 = (int8_t)vm->romb[vm->ip];
         vm->ip++;
-        uint16_t addr = vm->reg[ra] + off8;
+        uint16_t addr = (uint16_t)(vm->reg[ra] + off8);
         uint8_t low_val = vm->ram[addr];
         uint8_t high_val = vm->ram[addr + 1];
         uint16_t val16 = 0x0000;
@@ -541,7 +541,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
-        uint16_t addr = vm->reg[ra] + off8;
+        uint16_t addr = (uint16_t)(vm->reg[ra] + off8);
         uint8_t val8 = (uint8_t)(vm->reg[rs] & 0x00FF);
         vm->ram[addr] = val8;
         break;
@@ -554,7 +554,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
-        uint16_t addr = vm->reg[ra] + off8;
+        uint16_t addr = (uint16_t)(vm->reg[ra] + off8);
         uint16_t val16 = vm->reg[rs];
         uint8_t low_val = (uint8_t)(val16 & 0x00FF);
         uint8_t high_val = (uint8_t)((val16 >> 8) & 0x00FF);
