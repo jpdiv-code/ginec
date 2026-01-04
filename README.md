@@ -1,4 +1,5 @@
 # ginec
+
 ginec - is non-existing console
 
 ## Technical Architecture
@@ -7,11 +8,11 @@ ginec - is non-existing console
 
 The virtual machine exposes **three independent 16-bit address spaces**, each ranging from `0x0000` to `0xFFFF`.
 
-| Space | Name  | Purpose |
-|------|-------|---------|
-| ROMA | ROM Assets | Read-only asset storage (audio samples, lookup tables, etc.) |
-| ROMB | ROM Bytecode | Read-only executable bytecode |
-| RAM  | RAM | Read-write working memory |
+| Space | Name         | Purpose                                                      |
+| ----- | ------------ | ------------------------------------------------------------ |
+| ROMA  | ROM Assets   | Read-only asset storage (audio samples, lookup tables, etc.) |
+| ROMB  | ROM Bytecode | Read-only executable bytecode                                |
+| RAM   | RAM          | Read-write working memory                                    |
 
 Address spaces are isolated. Instructions explicitly specify the target space.
 
@@ -20,12 +21,14 @@ Address spaces are isolated. Instructions explicitly specify the target space.
 ### Registers
 
 #### General Purpose Registers
+
 - `R0`–`R3` — 4 general-purpose 16-bit registers
 
 Registers are untyped.
 
 #### Special Registers
-- `PC` — Program Counter (16-bit, ROMB)
+
+- `IP` — Instruction Pointer (16-bit, ROMB)
 - `SP` — Stack Pointer (16-bit, RAM)
 - `FLAGS` — Status flags:
   - `Z` — Zero
@@ -35,49 +38,21 @@ Registers are untyped.
 
 ---
 
-### Instruction Encoding
+### Instruction Set Architecture
 
-- Variable-length instructions
-- Encoding format:
-  - 1 byte opcode
-  - Followed by N operand bytes
-- No instruction alignment
-- All multi-byte values are little-endian
-
----
-
-### Instruction Set Overview (ISA)
-
-This section describes instruction categories only.
-
-#### Data Movement
-- Register-to-register moves
-- Immediate loads (8-bit and 16-bit)
-- Load/store between registers and RAM
-- Load from ROMA into registers
-- Push/pop to/from stack in RAM (immediate and register forms)
-
-#### Integer Arithmetic (16-bit)
-- Addition, subtraction
-- Bitwise logic
-- Shifts
-- Comparison (flag-setting only)
-
-#### Control Flow
-- Absolute and relative jumps, unconditional and conditional (on FLAGS)
-- Call/return using the stack
-
-Opcodes: https://docs.google.com/spreadsheets/d/1KX17rRPHqwX_RdwbMEfj9ypyBbH-xKldakPiaY_tD00
+Described in detail in [ISA.md](ISA.md).
 
 ---
 
 ### Graphics System
 
 #### Display Parameters
+
 - Fixed resolution: **180 × 136**
 - 1 byte per pixel (256 VGA colors)
 
 #### Framebuffer
+
 - Linear, row-major layout
 - Total framebuffer size: **24,480 bytes**
 
@@ -94,6 +69,7 @@ Rendering is deferred until `SYNC` is executed.
 ### Frame Synchronization Instruction
 
 #### `SYNC` instruction
+
 - Finalizes the current VM frame
 - Signals the host to render the most recently prepared framebuffer
 - Blocks VM execution until the next frame boundary
@@ -112,28 +88,28 @@ Unused bits must be zero.
 #### Button Bit Layout
 
 | Bit | Button |
-|----:|--------|
-| 0 | UP |
-| 1 | DOWN |
-| 2 | LEFT |
-| 3 | RIGHT |
-| 4 | A |
-| 5 | B |
-| 6 | X |
-| 7 | Y |
-| 8 | L |
-| 9 | R |
-| 10 | START |
-| 11 | SELECT |
+| --: | ------ |
+|   0 | UP     |
+|   1 | DOWN   |
+|   2 | LEFT   |
+|   3 | RIGHT  |
+|   4 | A      |
+|   5 | B      |
+|   6 | X      |
+|   7 | Y      |
+|   8 | L      |
+|   9 | R      |
+|  10 | START  |
+|  11 | SELECT |
 
 Bits 12–15 are reserved and must be zero.
 
 #### RAM Input Registers (MMIO)
 
-| Offset | Purpose |
-|------:|---------|
-| `0x00` | INPUT_DOWN (current state) |
-| `0x02` | INPUT_PRESSED (latched since last SYNC) |
+| Offset | Purpose                                  |
+| -----: | ---------------------------------------- |
+| `0x00` | INPUT_DOWN (current state)               |
+| `0x02` | INPUT_PRESSED (latched since last SYNC)  |
 | `0x04` | INPUT_RELEASED (latched since last SYNC) |
 
 - INPUT_PRESSED and INPUT_RELEASED are accumulated by the host
@@ -161,6 +137,7 @@ Host implementations must resample audio if required by the underlying audio sys
 A dedicated instruction starts playback of a PCM buffer stored in ROMA.
 
 Parameters:
+
 - ROMA address of sample data
 - Sample length in bytes
 
@@ -169,6 +146,7 @@ Parameters:
 ### Audio Channels
 
 #### Sample Channels
+
 - **4 independent sample channels**
 - Each channel supports:
   - Play
@@ -176,6 +154,7 @@ Parameters:
   - Optional looping
 
 #### PSG Channels
+
 - **2 PSG channels**
 - Supported waveforms:
   - Square
@@ -202,16 +181,12 @@ The VM runs in a single thread.
 
 Total RAM size: **65,536 bytes**
 
-| Address Range | Size | Purpose |
-|--------------|------|---------|
-| `0x0000–0x00FF` | 256 B | MMIO (input, audio) |
-| `0x0100–0x60AF` | 24,480 B | Framebuffer (180 × 136) |
-| `0x60B0–0xDFFF` | 32,608 B | General-purpose RAM |
-| `0xE000–0xFFFF` | 8,192 B | Stack (grows downward) |
+| Address Range   | Size     | Purpose                       |
+| --------------- | -------- | ----------------------------- |
+| `0x0000–0x00FF` | 256 B    | MMIO (input, audio)           |
+| `0x0100–0x609F` | 24,480 B | Framebuffer (180 × 136)       |
+| `0x60A0–0xFFFF` | 40,800 B | General-purpose RAM and stack |
 
 Initial stack pointer: SP = 0xFFFF
 
 Out-of-bounds memory access is undefined behavior.
-
----
-

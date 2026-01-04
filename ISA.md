@@ -6,20 +6,20 @@ This document describes the instruction set architecture (ISA) of the GINEC virt
 
 ## 1. General execution model
 
-* Instructions are fetched sequentially from **ROMB** (bytecode memory).
-* All instructions are variable-length.
-* Multi-byte operands are encoded **little-endian**.
-* The instruction pointer (`IP`) always points to the next opcode byte.
-* Invalid or out-of-bounds memory access results in **undefined behavior**.
+- Instructions are fetched sequentially from **ROMB** (bytecode memory).
+- All instructions are variable-length.
+- Multi-byte operands are encoded **little-endian**.
+- The instruction pointer (`IP`) always points to the next opcode byte.
+- Invalid or out-of-bounds memory access results in **undefined behavior**.
 
 ---
 
 ## 2. Registers
 
-* The VM provides 4 **general-purpose registers** (`reg[0..3]`).
-* Each register is **16-bit wide**.
-* Register operands in instructions (`RD`, `RA`, `RS`, etc.) always refer to a **register index**, not a value.
-* The value stored in a register is accessed as `reg[index]`.
+- The VM provides 4 **general-purpose registers** (`reg[0..3]`).
+- Each register is **16-bit wide**.
+- Register operands in instructions (`RD`, `RA`, `RS`, etc.) always refer to a **register index**, not a value.
+- The value stored in a register is accessed as `reg[index]`.
 
 ---
 
@@ -29,17 +29,18 @@ This document describes the instruction set architecture (ISA) of the GINEC virt
 
 Instructions follow a strict width convention:
 
-* **Instructions without `.w` suffix** operate on the **low 8 bits** of the destination register.
+- **Instructions without `.w` suffix** operate on the **low 8 bits** of the destination register.
 
-  * The high 8 bits of the register are **preserved**.
-* **Instructions with `.w` suffix** operate on the **full 16-bit register**.
+  - The high 8 bits of the register are **preserved**.
+
+- **Instructions with `.w` suffix** operate on the **full 16-bit register**.
 
 ### 3.2 Byte operations (no `.w`)
 
 For byte-sized instructions:
 
-* Input values are taken from `reg[RD] & 0xFF`.
-* Results are written back to the low byte only:
+- Input values are taken from `reg[RD] & 0xFF`.
+- Results are written back to the low byte only:
 
   ```
   reg[RD] = (reg[RD] & 0xFF00) | result8
@@ -49,16 +50,16 @@ For byte-sized instructions:
 
 For word-sized instructions:
 
-* Input values use the full 16-bit register.
-* Results replace the full register value.
+- Input values use the full 16-bit register.
+- Results replace the full register value.
 
 ---
 
 ## 4. Immediate values
 
-* `imm8` values are **unsigned 8-bit**, unless explicitly stated otherwise.
-* `imm16` values are **unsigned 16-bit**, encoded little-endian.
-* Some instructions interpret `imm8` as **signed** (`int8_t`), explicitly noted in their description (e.g. offsets, stack adjustment).
+- `imm8` values are **unsigned 8-bit**, unless explicitly stated otherwise.
+- `imm16` values are **unsigned 16-bit**, encoded little-endian.
+- Some instructions interpret `imm8` as **signed** (`int8_t`), explicitly noted in their description (e.g. offsets, stack adjustment).
 
 ---
 
@@ -68,17 +69,17 @@ For word-sized instructions:
 
 The VM has three distinct address spaces:
 
-* **RAM** — mutable data memory
-* **ROMA** — read-only asset/data memory
-* **ROMB** — read-only bytecode memory
+- **RAM** — mutable data memory
+- **ROMA** — read-only asset/data memory
+- **ROMB** — read-only bytecode memory
 
 Instructions explicitly specify which address space they operate on.
 
 ### 5.2 Memory access rules
 
-* All memory addresses are 16-bit.
-* Address operands always represent an **offset into the corresponding address space**, not a host pointer.
-* Word accesses (`.w`) are **little-endian**:
+- All memory addresses are 16-bit.
+- Address operands always represent an **offset into the corresponding address space**, not a host pointer.
+- Word accesses (`.w`) are **little-endian**:
 
   ```
   low  byte = mem[addr]
@@ -89,23 +90,24 @@ Instructions explicitly specify which address space they operate on.
 
 ## 6. Stack model
 
-* The VM has a **hardware stack** located in RAM.
-* The stack pointer (`SP`) grows **downwards**.
-* Push operations decrement `SP`, pop operations increment it.
-* Stack operations are defined explicitly by `PUSH`, `POP`, `CALL`, `RET`, and `ADJSP`.
+- The VM has a **hardware stack** located in RAM.
+- The stack pointer (`SP`) grows **downwards**.
+- Push operations decrement `SP`, pop operations increment it.
+- Stack operations are defined explicitly by `PUSH`, `POP`, `CALL`, `RET`, and `ADJSP`.
 
 ### 6.1 `ADJSP`
 
-* `ADJSP imm8` adjusts the stack pointer by a **signed** 8-bit value:
+- `ADJSP imm8` adjusts the stack pointer by a **signed** 8-bit value:
 
   ```
   SP = SP + (int8_t)imm8
   ```
-* This instruction is typically used for:
 
-  * allocating local variables,
-  * cleaning up function arguments,
-  * stack frame management.
+- This instruction is typically used for:
+
+  - allocating local variables,
+  - cleaning up function arguments,
+  - stack frame management.
 
 ---
 
@@ -122,10 +124,10 @@ The VM maintains four condition flags:
 
 ### 7.1 Flag update policy
 
-* Arithmetic instructions (`ADD`, `SUB`, `CMP`, `MUL`, etc.) update **Z, N, C, V**.
-* Logical instructions (`AND`, `OR`, `XOR`, `NOT`) update **Z and N**; **C and V are cleared**.
-* Shift instructions update **Z and N**; **C may capture the shifted-out bit**; **V is cleared**.
-* `CMP` behaves like `SUB` but discards the result.
+- Arithmetic instructions (`ADD`, `SUB`, `CMP`, `MUL`, etc.) update **Z, N, C, V**.
+- Logical instructions (`AND`, `OR`, `XOR`, `NOT`) update **Z and N**; **C and V are cleared**.
+- Shift instructions update **Z and N**; **C may capture the shifted-out bit**; **V is cleared**.
+- `CMP` behaves like `SUB` but discards the result.
 
 ---
 
@@ -135,19 +137,20 @@ The VM maintains four condition flags:
 
 After `CMP a, b`:
 
-* `C == 1` → `a < b` (unsigned, borrow occurred)
-* `C == 0` → `a >= b` (unsigned)
+- `C == 1` → `a < b` (unsigned, borrow occurred)
+- `C == 0` → `a >= b` (unsigned)
 
 ### 8.2 Signed comparisons
 
 After `CMP a, b`:
 
-* Signed less-than:
+- Signed less-than:
 
   ```
   (N != V)
   ```
-* Signed greater-or-equal:
+
+- Signed greater-or-equal:
 
   ```
   (N == V)
@@ -161,12 +164,13 @@ These rules are used by `JLT` / `JGE`.
 
 ### 9.1 `SEXT8.w`
 
-* `SEXT8.w RD` sign-extends the low 8 bits of `RD` to a 16-bit signed value:
+- `SEXT8.w RD` sign-extends the low 8 bits of `RD` to a 16-bit signed value:
 
   ```
   reg[RD] = (int16_t)(int8_t)(reg[RD] & 0xFF)
   ```
-* This instruction is required when working with signed byte values.
+
+- This instruction is required when working with signed byte values.
 
 ---
 
@@ -174,11 +178,11 @@ These rules are used by `JLT` / `JGE`.
 
 ### 10.1 Jumps
 
-* Jump instructions may be:
+- Jump instructions may be:
 
-  * unconditional,
-  * conditional (based on flags),
-  * immediate, register-based, or stack-based.
+  - unconditional,
+  - conditional (based on flags),
+  - immediate, register-based, or stack-based.
 
 ### 10.2 Conditional jumps
 
@@ -186,31 +190,31 @@ Conditional jumps evaluate flags **set by the most recent flag-setting instructi
 
 Examples:
 
-* `JZ`  — jump if `Z == 1` (equal / zero)
-* `JNZ` — jump if `Z == 0` (not equal)
-* `JC`  — jump if `C == 1` (unsigned less-than)
-* `JNC` — jump if `C == 0` (unsigned greater-or-equal)
-* `JLT` — jump if signed less-than
-* `JGE` — jump if signed greater-or-equal
+- `JZ` — jump if `Z == 1` (equal / zero)
+- `JNZ` — jump if `Z == 0` (not equal)
+- `JC` — jump if `C == 1` (unsigned less-than)
+- `JNC` — jump if `C == 0` (unsigned greater-or-equal)
+- `JLT` — jump if signed less-than
+- `JGE` — jump if signed greater-or-equal
 
 ---
 
 ## 11. Rendering and synchronization
 
-* The framebuffer resides in a predefined RAM region.
-* Each pixel is encoded as a single byte.
-* The meaning of pixel values (palette or fixed colors) is defined by the host environment.
-* `SYNC`:
+- The framebuffer resides in a predefined RAM region.
+- Each pixel is encoded as a single byte.
+- The meaning of pixel values (palette or fixed colors) is defined by the host environment.
+- `SYNC`:
 
-  * finalizes the current framebuffer contents,
-  * triggers rendering,
-  * synchronizes execution to the target frame rate.
+  - finalizes the current framebuffer contents,
+  - triggers rendering,
+  - synchronizes execution to the target frame rate.
 
 ---
 
 ## 12. Determinism and host interaction
 
-* The VM itself is deterministic.
+- The VM itself is deterministic.
 
 ---
 
@@ -218,19 +222,19 @@ Examples:
 
 The pseudocode column uses the following conventions:
 
-| Notation | Meaning |
-| --- | --- |
-| `RD`, `RS`, `RA`, etc. | Value of the register (shorthand for `reg[index]`) |
-| `lo(R)` | Low byte of register R (`reg[R] & 0xFF`) |
-| `hi(R)` | High byte of register R (`reg[R] >> 8`) |
-| `(i8)`, `(i16)` | Cast to signed 8-bit / 16-bit |
-| `read16(mem, addr)` | Read 16-bit little-endian: `mem[addr] \| (mem[addr+1] << 8)` |
+| Notation                  | Meaning                                                                  |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `RD`, `RS`, `RA`, etc.    | Value of the register (shorthand for `reg[index]`)                       |
+| `lo(R)`                   | Low byte of register R (`reg[R] & 0xFF`)                                 |
+| `hi(R)`                   | High byte of register R (`reg[R] >> 8`)                                  |
+| `(i8)`, `(i16)`           | Cast to signed 8-bit / 16-bit                                            |
+| `read16(mem, addr)`       | Read 16-bit little-endian: `mem[addr] \| (mem[addr+1] << 8)`             |
 | `write16(mem, addr, val)` | Write 16-bit little-endian: `mem[addr] = lo(val); mem[addr+1] = hi(val)` |
-| `push8(val)` | `sp -= 1; ram[sp] = val` |
-| `push16(val)` | `sp -= 2; write16(ram, sp, val)` |
-| `pop8()` | `tmp = ram[sp]; sp += 1; return tmp` |
-| `pop16()` | `tmp = read16(ram, sp); sp += 2; return tmp` |
-| `flags(expr)` | Update Z, N, C, V flags based on expression result (no store) |
+| `push8(val)`              | `sp -= 1; ram[sp] = val`                                                 |
+| `push16(val)`             | `sp -= 2; write16(ram, sp, val)`                                         |
+| `pop8()`                  | `tmp = ram[sp]; sp += 1; return tmp`                                     |
+| `pop16()`                 | `tmp = read16(ram, sp); sp += 2; return tmp`                             |
+| `flags(expr)`             | Update Z, N, C, V flags based on expression result (no store)            |
 
 ---
 
