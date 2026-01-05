@@ -153,38 +153,87 @@ int main(int argc, char* argv[])
     vm.romb[0x0004] = OP_SEED;
     vm.romb[0x0005] = 0; // seed from reg 0
 
-    // Loop: generate random pixel address in framebuffer range
-    vm.romb[0x0006] = OP_RANDw;
-    vm.romb[0x0007] = 0; // reg 0 = random 16-bit value
+    // Loop: generate random X coordinate (0-179)
+    // reg 0 = X, reg 1 = Y, reg 2 = address, reg 3 = color
 
-    // Mask to limit offset to ~24480 (framebuffer size)
-    // 0x5FFF = 24575, close to 24480
+    vm.romb[0x0006] = OP_RAND;
+    vm.romb[0x0007] = 0; // reg 0 = random 8-bit value
+
+    // Mask X to 0-255, values >= 180 will wrap (not perfect but better distribution)
     vm.romb[0x0008] = OP_ANDw;
     vm.romb[0x0009] = 0;    // reg 0
-    vm.romb[0x000A] = 0xFF; // low byte mask
-    vm.romb[0x000B] = 0x5F; // high byte mask (0x5FFF)
+    vm.romb[0x000A] = 0xFF; // low byte mask (0x00FF)
+    vm.romb[0x000B] = 0x00; // high byte mask
 
-    // Add framebuffer base address (0x0100)
-    vm.romb[0x000C] = OP_ADDw;
-    vm.romb[0x000D] = 0;    // reg 0
-    vm.romb[0x000E] = 0x00; // low byte of 0x0100
-    vm.romb[0x000F] = 0x01; // high byte of 0x0100
-    // Now reg 0 = random address in framebuffer
+    // Generate random Y coordinate (0-135)
+    vm.romb[0x000C] = OP_RAND;
+    vm.romb[0x000D] = 1; // reg 1 = random 8-bit value
+
+    // Mask Y to 0-255, values >= 136 will wrap
+    vm.romb[0x000E] = OP_ANDw;
+    vm.romb[0x000F] = 1;    // reg 1
+    vm.romb[0x0010] = 0xFF; // low byte mask (0x00FF)
+    vm.romb[0x0011] = 0x00; // high byte mask
+
+    // Calculate address: base + Y * 180 + X
+    // reg 2 = Y * 180
+    vm.romb[0x0012] = OP_MOVw;
+    vm.romb[0x0013] = 2; // reg 2 = dest
+    vm.romb[0x0014] = 1; // reg 1 = src (Y)
+
+    vm.romb[0x0015] = OP_MULw;
+    vm.romb[0x0016] = 2;    // reg 2
+    vm.romb[0x0017] = 0xB4; // low byte of 180
+    vm.romb[0x0018] = 0x00; // high byte of 180
+
+    // reg 2 = reg 2 + X
+    vm.romb[0x0019] = OP_ADDRw;
+    vm.romb[0x001A] = 2; // reg 2 (dest)
+    vm.romb[0x001B] = 0; // reg 0 (X)
+
+    // reg 2 = reg 2 + FB_BASE (0x0100)
+    vm.romb[0x001C] = OP_ADDw;
+    vm.romb[0x001D] = 2;    // reg 2
+    vm.romb[0x001E] = 0x00; // low byte of 0x0100
+    vm.romb[0x001F] = 0x01; // high byte of 0x0100
 
     // Generate random color
-    vm.romb[0x0010] = OP_RAND;
-    vm.romb[0x0011] = 1; // reg 1 = random 8-bit color
+    vm.romb[0x0020] = OP_RAND;
+    vm.romb[0x0021] = 3; // reg 3 = random 8-bit color
+
+    // Store color at address (but only if within bounds)
+    // Check X < 180: compare reg 0 with 180
+    vm.romb[0x0022] = OP_CMPw;
+    vm.romb[0x0023] = 0;    // reg 0 (X)
+    vm.romb[0x0024] = 0xB4; // low byte of 180
+    vm.romb[0x0025] = 0x00; // high byte of 180
+
+    // Jump to loop if X >= 180 (carry not set means X >= 180)
+    vm.romb[0x0026] = OP_JNC;
+    vm.romb[0x0027] = 0x06; // low byte of loop address
+    vm.romb[0x0028] = 0x00; // high byte of loop address
+
+    // Check Y < 136: compare reg 1 with 136
+    vm.romb[0x0029] = OP_CMPw;
+    vm.romb[0x002A] = 1;    // reg 1 (Y)
+    vm.romb[0x002B] = 0x88; // low byte of 136
+    vm.romb[0x002C] = 0x00; // high byte of 136
+
+    // Jump to loop if Y >= 136
+    vm.romb[0x002D] = OP_JNC;
+    vm.romb[0x002E] = 0x06; // low byte of loop address
+    vm.romb[0x002F] = 0x00; // high byte of loop address
 
     // Store color at address
-    vm.romb[0x0012] = OP_STR;
-    vm.romb[0x0013] = 0; // address in reg 0
-    vm.romb[0x0014] = 1; // color in reg 1
+    vm.romb[0x0030] = OP_STR;
+    vm.romb[0x0031] = 2; // address in reg 2
+    vm.romb[0x0032] = 3; // color in reg 3
 
     // Sync and loop
-    vm.romb[0x0015] = OP_SYNC;
-    vm.romb[0x0016] = OP_JMP;
-    vm.romb[0x0017] = 0x06; // low byte of loop address
-    vm.romb[0x0018] = 0x00; // high byte of loop address
+    vm.romb[0x0033] = OP_SYNC;
+    vm.romb[0x0034] = OP_JMP;
+    vm.romb[0x0035] = 0x06; // low byte of loop address
+    vm.romb[0x0036] = 0x00; // high byte of loop address
 
     bool running = true;
     double next_frame_time = now_seconds() + VM_FRAME_DT;
