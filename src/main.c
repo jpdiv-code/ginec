@@ -156,24 +156,13 @@ int main(int argc, char* argv[])
     // Loop: generate random X coordinate (0-179)
     // reg 0 = X, reg 1 = Y, reg 2 = address, reg 3 = color
 
+    // Generate random X coordinate (0-179)
     vm.romb[0x0006] = OP_RAND;
     vm.romb[0x0007] = 0; // reg 0 = random 8-bit value
-
-    // Mask X to 0-255, values >= 180 will wrap (not perfect but better distribution)
-    vm.romb[0x0008] = OP_ANDw;
-    vm.romb[0x0009] = 0;    // reg 0
-    vm.romb[0x000A] = 0xFF; // low byte mask (0x00FF)
-    vm.romb[0x000B] = 0x00; // high byte mask
 
     // Generate random Y coordinate (0-135)
     vm.romb[0x000C] = OP_RAND;
     vm.romb[0x000D] = 1; // reg 1 = random 8-bit value
-
-    // Mask Y to 0-255, values >= 136 will wrap
-    vm.romb[0x000E] = OP_ANDw;
-    vm.romb[0x000F] = 1;    // reg 1
-    vm.romb[0x0010] = 0xFF; // low byte mask (0x00FF)
-    vm.romb[0x0011] = 0x00; // high byte mask
 
     // Calculate address: base + Y * 180 + X
     // reg 2 = Y * 180
