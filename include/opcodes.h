@@ -130,6 +130,7 @@ enum
     // CALLS
     OP_CALL = 0x90,
     OP_CALLR = 0x91,
+    OP_RET = 0x92,
 };
 
 #endif // OPCODES_H

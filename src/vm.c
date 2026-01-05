@@ -1381,6 +1381,18 @@ StepResult vm_step(VM* vm)
         vm->ip = addr;
         break;
     }
+    case OP_RET:
+    {
+        vm->sp++;
+        uint8_t ret_low = vm->ram[vm->sp];
+        vm->sp++;
+        uint8_t ret_high = vm->ram[vm->sp];
+        uint16_t ret_addr = 0x0000;
+        ret_addr |= (uint16_t)ret_low;
+        ret_addr |= (uint16_t)(ret_high << 8);
+        vm->ip = ret_addr;
+        break;
+    }
 
         // =====
         // UNKNOWN OPCODE

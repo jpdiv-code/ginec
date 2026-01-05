@@ -390,3 +390,4 @@ The following table lists all instructions supported by the VM.
 | 8F |  |  |  |  |  |  |
 | 90 | CALL | addr | 3 | push16(ip + 3); ip = addr | push next instruction address on stack, jump to addr address | CALLS |
 | 91 | CALLR | RA | 2 | push16(ip + 2); ip = RA | same as CALL, but addr lies in the reg[RA] |  |
+| 92 | RET |  | 1 | ip = pop16() | pop return address from stack and jump to it |  |
