@@ -55,7 +55,7 @@ static inline void set_flags_on_ADD(VM* vm, uint16_t a, uint16_t b, uint32_t res
 
     uint16_t a_sign = a & sign_bit;
     uint16_t b_sign = b & sign_bit;
-    uint16_t r_sign = res & sign_bit;
+    uint16_t r_sign = (uint16_t)res & sign_bit;
 
     if ((a_sign == b_sign) && (a_sign != r_sign))
     {
@@ -86,7 +86,7 @@ static inline void set_flags_on_SUB(VM* vm, uint16_t a, uint16_t b, uint32_t res
 
     uint16_t a_sign = a & sign_bit;
     uint16_t b_sign = b & sign_bit;
-    uint16_t r_sign = res & sign_bit;
+    uint16_t r_sign = (uint16_t)res & sign_bit;
 
     if ((a_sign != b_sign) && (a_sign != r_sign))
     {
