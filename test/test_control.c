@@ -80,6 +80,25 @@ int test_jnz_taken(void)
     return 1;
 }
 
+int test_jnz_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = FLAG_Z; // Zero flag IS set
+
+    // Program: JNZ 0x0200
+    vm.romb[0] = OP_JNZ;
+    vm.romb[1] = 0x00; // addr low
+    vm.romb[2] = 0x02; // addr high
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 3, "JNZ should not jump when Z flag is set, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
 int test_jc_taken(void)
 {
     VM vm;
@@ -99,6 +118,25 @@ int test_jc_taken(void)
     return 1;
 }
 
+int test_jc_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = 0; // Carry flag NOT set
+
+    // Program: JC 0x0300
+    vm.romb[0] = OP_JC;
+    vm.romb[1] = 0x00; // addr low
+    vm.romb[2] = 0x03; // addr high
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 3, "JC should not jump when C flag is clear, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
 int test_jnc_taken(void)
 {
     VM vm;
@@ -114,6 +152,25 @@ int test_jnc_taken(void)
     vm_step(&vm);
 
     ASSERT(vm.ip == 0x0400, "JNC should jump when C flag is clear, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jnc_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = FLAG_C; // Carry flag IS set
+
+    // Program: JNC 0x0400
+    vm.romb[0] = OP_JNC;
+    vm.romb[1] = 0x00; // addr low
+    vm.romb[2] = 0x04; // addr high
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 3, "JNC should not jump when C flag is set, got 0x%04X", vm.ip);
 
     return 1;
 }
@@ -138,6 +195,26 @@ int test_jlt_taken(void)
     return 1;
 }
 
+int test_jlt_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    // Signed greater-or-equal: (N == V)
+    vm.flags = FLAG_N | FLAG_V; // N=1, V=1 -> N==V -> not less than
+
+    // Program: JLT 0x0500
+    vm.romb[0] = OP_JLT;
+    vm.romb[1] = 0x00; // addr low
+    vm.romb[2] = 0x05; // addr high
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 3, "JLT should not jump when N==V, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
 int test_jge_taken(void)
 {
     VM vm;
@@ -154,6 +231,26 @@ int test_jge_taken(void)
     vm_step(&vm);
 
     ASSERT(vm.ip == 0x0600, "JGE should jump when N==V, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jge_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    // Signed less-than: (N != V)
+    vm.flags = FLAG_V; // N=0, V=1 -> N!=V -> less than
+
+    // Program: JGE 0x0600
+    vm.romb[0] = OP_JGE;
+    vm.romb[1] = 0x00; // addr low
+    vm.romb[2] = 0x06; // addr high
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 3, "JGE should not jump when N!=V, got 0x%04X", vm.ip);
 
     return 1;
 }
@@ -191,6 +288,215 @@ int test_jzr(void)
     vm_step(&vm);
 
     ASSERT(vm.ip == 0x0888, "JZR should jump when Z flag is set, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jzr_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = 0; // Z flag not set
+    vm.reg[1] = 0x0888;
+
+    // Program: JZR r1
+    vm.romb[0] = OP_JZR;
+    vm.romb[1] = 1; // r1
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 2, "JZR should not jump when Z flag is clear, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jnzr_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = 0; // Z flag not set
+    vm.reg[2] = 0x0999;
+
+    // Program: JNZR r2
+    vm.romb[0] = OP_JNZR;
+    vm.romb[1] = 2; // r2
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 0x0999, "JNZR should jump when Z flag is clear, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jnzr_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = FLAG_Z; // Z flag set
+    vm.reg[2] = 0x0999;
+
+    // Program: JNZR r2
+    vm.romb[0] = OP_JNZR;
+    vm.romb[1] = 2; // r2
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 2, "JNZR should not jump when Z flag is set, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jcr_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = FLAG_C; // C flag set
+    vm.reg[0] = 0x0AAA;
+
+    // Program: JCR r0
+    vm.romb[0] = OP_JCR;
+    vm.romb[1] = 0; // r0
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 0x0AAA, "JCR should jump when C flag is set, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jcr_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = 0; // C flag not set
+    vm.reg[0] = 0x0AAA;
+
+    // Program: JCR r0
+    vm.romb[0] = OP_JCR;
+    vm.romb[1] = 0; // r0
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 2, "JCR should not jump when C flag is clear, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jncr_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = 0; // C flag not set
+    vm.reg[1] = 0x0BBB;
+
+    // Program: JNCR r1
+    vm.romb[0] = OP_JNCR;
+    vm.romb[1] = 1; // r1
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 0x0BBB, "JNCR should jump when C flag is clear, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jncr_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = FLAG_C; // C flag set
+    vm.reg[1] = 0x0BBB;
+
+    // Program: JNCR r1
+    vm.romb[0] = OP_JNCR;
+    vm.romb[1] = 1; // r1
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 2, "JNCR should not jump when C flag is set, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jltr_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = FLAG_N; // N=1, V=0 -> N!=V -> signed less than
+    vm.reg[2] = 0x0CCC;
+
+    // Program: JLTR r2
+    vm.romb[0] = OP_JLTR;
+    vm.romb[1] = 2; // r2
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 0x0CCC, "JLTR should jump when N!=V, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jltr_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = 0; // N=0, V=0 -> N==V -> not less than
+    vm.reg[2] = 0x0CCC;
+
+    // Program: JLTR r2
+    vm.romb[0] = OP_JLTR;
+    vm.romb[1] = 2; // r2
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 2, "JLTR should not jump when N==V, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jger_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = FLAG_N | FLAG_V; // N=1, V=1 -> N==V -> signed >=
+    vm.reg[3] = 0x0DDD;
+
+    // Program: JGER r3
+    vm.romb[0] = OP_JGER;
+    vm.romb[1] = 3; // r3
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 0x0DDD, "JGER should jump when N==V, got 0x%04X", vm.ip);
+
+    return 1;
+}
+
+int test_jger_not_taken(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    vm.flags = FLAG_V; // N=0, V=1 -> N!=V -> less than
+    vm.reg[3] = 0x0DDD;
+
+    // Program: JGER r3
+    vm.romb[0] = OP_JGER;
+    vm.romb[1] = 3; // r3
+
+    vm_step(&vm);
+
+    ASSERT(vm.ip == 2, "JGER should not jump when N!=V, got 0x%04X", vm.ip);
 
     return 1;
 }
@@ -316,17 +622,35 @@ int main(void)
     printf("GINEC VM - Control Flow Tests\n");
     printf("========================================\n\n");
 
-    // Jumps
+    // Immediate jumps
     run_test("JMP", test_jmp);
     run_test("JZ (taken)", test_jz_taken);
     run_test("JZ (not taken)", test_jz_not_taken);
     run_test("JNZ (taken)", test_jnz_taken);
+    run_test("JNZ (not taken)", test_jnz_not_taken);
     run_test("JC (taken)", test_jc_taken);
+    run_test("JC (not taken)", test_jc_not_taken);
     run_test("JNC (taken)", test_jnc_taken);
+    run_test("JNC (not taken)", test_jnc_not_taken);
     run_test("JLT (taken)", test_jlt_taken);
+    run_test("JLT (not taken)", test_jlt_not_taken);
     run_test("JGE (taken)", test_jge_taken);
+    run_test("JGE (not taken)", test_jge_not_taken);
+
+    // Register jumps
     run_test("JMPR", test_jmpr);
-    run_test("JZR", test_jzr);
+    run_test("JZR (taken)", test_jzr);
+    run_test("JZR (not taken)", test_jzr_not_taken);
+    run_test("JNZR (taken)", test_jnzr_taken);
+    run_test("JNZR (not taken)", test_jnzr_not_taken);
+    run_test("JCR (taken)", test_jcr_taken);
+    run_test("JCR (not taken)", test_jcr_not_taken);
+    run_test("JNCR (taken)", test_jncr_taken);
+    run_test("JNCR (not taken)", test_jncr_not_taken);
+    run_test("JLTR (taken)", test_jltr_taken);
+    run_test("JLTR (not taken)", test_jltr_not_taken);
+    run_test("JGER (taken)", test_jger_taken);
+    run_test("JGER (not taken)", test_jger_not_taken);
 
     // Calls
     run_test("CALL/RET", test_call_ret);

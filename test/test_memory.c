@@ -149,6 +149,80 @@ int test_ldri_stri(void)
     return 1;
 }
 
+int test_ldrw_strw(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    // Setup: address in r0, data in RAM (little-endian)
+    vm.reg[0] = 0x5500;
+    vm.ram[0x5500] = 0x78;
+    vm.ram[0x5501] = 0x56;
+
+    // Program: LDR.w r1, r0
+    vm.romb[0] = OP_LDRw;
+    vm.romb[1] = 1; // rd = r1
+    vm.romb[2] = 0; // ra = r0
+
+    vm_step(&vm);
+
+    ASSERT(vm.reg[1] == 0x5678, "LDR.w should load 0x5678, got 0x%04X", vm.reg[1]);
+
+    // Test STR.w: store r2 at address in r3
+    vm.reg[3] = 0x6600;
+    vm.reg[2] = 0xABCD;
+
+    vm.romb[3] = OP_STRw;
+    vm.romb[4] = 3; // ra = r3
+    vm.romb[5] = 2; // rs = r2
+
+    vm.ip = 3;
+    vm_step(&vm);
+
+    ASSERT(vm.ram[0x6600] == 0xCD, "STR.w low byte should be 0xCD, got 0x%02X", vm.ram[0x6600]);
+    ASSERT(vm.ram[0x6601] == 0xAB, "STR.w high byte should be 0xAB, got 0x%02X", vm.ram[0x6601]);
+
+    return 1;
+}
+
+int test_ldriw_striw(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    // Setup: base address in r0, data in RAM (little-endian)
+    vm.reg[0] = 0x7700;
+    vm.ram[0x770A] = 0xEF; // offset +10
+    vm.ram[0x770B] = 0xBE;
+
+    // Program: LDRI.w r1, r0, 10
+    vm.romb[0] = OP_LDRIw;
+    vm.romb[1] = 1;  // rd = r1
+    vm.romb[2] = 0;  // ra = r0
+    vm.romb[3] = 10; // offset
+
+    vm_step(&vm);
+
+    ASSERT(vm.reg[1] == 0xBEEF, "LDRI.w should load 0xBEEF, got 0x%04X", vm.reg[1]);
+
+    // Test STRI.w: store at base + offset
+    vm.reg[2] = 0x8800;
+    vm.reg[3] = 0x1234;
+
+    vm.romb[4] = OP_STRIw;
+    vm.romb[5] = 2;  // ra = r2
+    vm.romb[6] = 20; // offset
+    vm.romb[7] = 3;  // rs = r3
+
+    vm.ip = 4;
+    vm_step(&vm);
+
+    ASSERT(vm.ram[0x8814] == 0x34, "STRI.w low byte should be 0x34, got 0x%02X", vm.ram[0x8814]);
+    ASSERT(vm.ram[0x8815] == 0x12, "STRI.w high byte should be 0x12, got 0x%02X", vm.ram[0x8815]);
+
+    return 1;
+}
+
 // ========================================
 // ROMA Instructions Tests
 // ========================================
@@ -221,6 +295,30 @@ int test_ldar(void)
     return 1;
 }
 
+int test_ldarw(void)
+{
+    VM vm;
+    init_test_vm(&vm);
+
+    // Put data in ROMA (little-endian)
+    vm.roma[0x0400] = 0xAD;
+    vm.roma[0x0401] = 0xDE;
+
+    // Setup: address in r0
+    vm.reg[0] = 0x0400;
+
+    // Program: LDAR.w r1, r0
+    vm.romb[0] = OP_LDARw;
+    vm.romb[1] = 1; // rd = r1
+    vm.romb[2] = 0; // ra = r0
+
+    vm_step(&vm);
+
+    ASSERT(vm.reg[1] == 0xDEAD, "LDAR.w should load 0xDEAD from ROMA, got 0x%04X", vm.reg[1]);
+
+    return 1;
+}
+
 // ========================================
 // Main test runner
 // ========================================
@@ -235,12 +333,15 @@ int main(void)
     run_test("LD/ST", test_ld_st);
     run_test("LD.w/ST.w", test_ldw_stw);
     run_test("LDR/STR", test_ldr_str);
+    run_test("LDR.w/STR.w", test_ldrw_strw);
     run_test("LDRI/STRI", test_ldri_stri);
+    run_test("LDRI.w/STRI.w", test_ldriw_striw);
 
     // ROMA
     run_test("LDA", test_lda);
     run_test("LDA.w", test_ldaw);
     run_test("LDAR", test_ldar);
+    run_test("LDAR.w", test_ldarw);
 
     print_summary();
 

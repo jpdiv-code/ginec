@@ -44,8 +44,11 @@ compile_commands.json
 *.hex
 bin/
 ginec
-test/test_alu
-test/test_basic
+test/test_arithmetic
+test/test_logic
+test/test_other
+test/test_reg
+test/test_stack
 test/test_control
 test/test_memory
 
