@@ -41,6 +41,9 @@ fmt:
 asm-01:
 	cd asm && python gac.py examples/01.asm ../game.roma ../game.romb
 
+asm-02:
+	cd asm && python gac.py examples/02.asm ../game.roma ../game.romb
+
 hooks:
 	git config core.hooksPath hooks
 
