@@ -10,7 +10,13 @@ To assemble a program:
 
 ```bash
 cd asm
-python3 gac.py examples/life.asm game.roma game.romb
+python3 gac.py examples/life.asm ../game.roma ../game.romb
+```
+
+or:
+
+```bash
+make asm-01
 ```
 
 This creates `game.roma` and `game.romb` files.
@@ -20,16 +26,7 @@ This creates `game.roma` and `game.romb` files.
 The VM loads `game.roma` and `game.romb` from the current working directory:
 
 ```bash
-make
-mv asm/game.roma asm/game.romb .
-./ginec
-```
-
-Or run from the asm directory:
-
-```bash
-cd asm
-../ginec
+make run
 ```
 
 ## Technical Architecture
