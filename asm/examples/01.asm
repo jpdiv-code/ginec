@@ -1,35 +1,8 @@
-.macro BEGIN
-    PUSH.w R0
-    PUSH.w R1
-    PUSH.w R2
-    PUSH.w R3
-.endmacro
-
-.macro RET_R0
-    POP.w R3
-    POP.w R2
-    POP.w R1
-    PUSH.w R0
-    SWP.w
-    POP.w R0
-    SWP.w
-    RET
-.endmacro
+.inc 01-utils.asm
 
 .section romb
 
-.equ SCREEN_WIDTH 180
-.equ SCREEN_HEIGHT 136
-.equ FRAMEBUFFER 0x0100
-
-.equ INPUT_PRESSED 0x0002
-.equ BTN_MASK_A 0x0010
-
-DATA:
-.org 0x0090
-.string "Hello, World!"
-
-.org 0x0000
+main: .org 0x0000
 
 LDI.w R0, 0
 SEED R0

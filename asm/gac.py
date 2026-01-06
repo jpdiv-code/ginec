@@ -626,8 +626,38 @@ class Assembler:
                     pass
 
                 elif directive == "inc":
-                    # File inclusion handled separately
-                    pass
+                    # Handle file inclusion in first pass
+                    # Extract filename from original line (after .inc directive)
+                    # This avoids issues with tokenization of filenames containing dots/dashes
+                    original_line = lines[i].strip()
+                    if ";" in original_line:
+                        original_line = original_line[:original_line.index(";")]
+                    original_line = original_line.strip()
+                    
+                    # Find .inc and get everything after it
+                    inc_match = re.search(r'\.inc\s+(.+)', original_line, re.IGNORECASE)
+                    if not inc_match:
+                        self.error("Filename expected", line_num)
+                    
+                    filename = inc_match.group(1).strip().strip('"')
+                    try:
+                        filepath = Path(self.current_file).parent / filename
+                        with open(filepath, "r", encoding="utf-8") as f:
+                            inc_lines = f.readlines()
+
+                        # Save current file
+                        saved_file = self.current_file
+                        self.current_file = str(filepath)
+
+                        # Recursive processing
+                        self.first_pass(inc_lines)
+
+                        # Restore file
+                        self.current_file = saved_file
+                    except Exception as e:
+                        self.error(
+                            f"Cannot include file {filename}: {str(e)}", line_num
+                        )
 
                 i += 1
                 continue
@@ -836,7 +866,19 @@ class Assembler:
                         )
 
                 elif directive == "inc":
-                    filename = tokens[1].value.strip('"')
+                    # Extract filename from original line (after .inc directive)
+                    # This avoids issues with tokenization of filenames containing dots/dashes
+                    original_line = lines[i].strip()
+                    if ";" in original_line:
+                        original_line = original_line[:original_line.index(";")]
+                    original_line = original_line.strip()
+                    
+                    # Find .inc and get everything after it
+                    inc_match = re.search(r'\.inc\s+(.+)', original_line, re.IGNORECASE)
+                    if not inc_match:
+                        self.error("Filename expected", line_num)
+                    
+                    filename = inc_match.group(1).strip().strip('"')
                     try:
                         filepath = Path(self.current_file).parent / filename
                         with open(filepath, "r", encoding="utf-8") as f:
