@@ -30,12 +30,16 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+	rm -f game.roma game.romb
 
 run: $(TARGET)
 	./$(TARGET)
 
 fmt:
 	clang-format -i $(SRCS) $(wildcard include/*.h)
+
+asm-01:
+	cd asm && python gac.py examples/01.asm ../game.roma ../game.romb
 
 hooks:
 	git config core.hooksPath hooks
