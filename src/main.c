@@ -51,6 +51,43 @@ static void sleep_until(double target_time)
 // INPUT UTILITIES
 // ==============================
 
+static SDL_GameController* gamepad = NULL;
+
+static uint16_t read_gamepad_state(void)
+{
+    if (!gamepad)
+        return 0;
+
+    uint16_t input = 0;
+
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_DPAD_UP))
+        input |= (1 << BTN_UP);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_DPAD_DOWN))
+        input |= (1 << BTN_DOWN);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
+        input |= (1 << BTN_LEFT);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
+        input |= (1 << BTN_RIGHT);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_A))
+        input |= (1 << BTN_A);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_B))
+        input |= (1 << BTN_B);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_X))
+        input |= (1 << BTN_X);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_Y))
+        input |= (1 << BTN_Y);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_LEFTSHOULDER))
+        input |= (1 << BTN_L);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER))
+        input |= (1 << BTN_R);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_START))
+        input |= (1 << BTN_START);
+    if (SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_BACK))
+        input |= (1 << BTN_SELECT);
+
+    return input;
+}
+
 static uint16_t read_input_state(void)
 {
     const uint8_t* keys = SDL_GetKeyboardState(NULL);
@@ -80,6 +117,9 @@ static uint16_t read_input_state(void)
         input |= (1 << BTN_START);
     if (keys[SDL_SCANCODE_RSHIFT] || keys[SDL_SCANCODE_LSHIFT])
         input |= (1 << BTN_SELECT);
+
+    // Combine keyboard and gamepad input
+    input |= read_gamepad_state();
 
     return input;
 }
@@ -163,10 +203,24 @@ int main(int argc, char* argv[])
     (void)argc;
     (void)argv;
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER |
+                 SDL_INIT_GAMECONTROLLER) != 0)
     {
         fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
         return 1;
+    }
+
+    for (int i = 0; i < SDL_NumJoysticks(); i++)
+    {
+        if (SDL_IsGameController(i))
+        {
+            gamepad = SDL_GameControllerOpen(i);
+            if (gamepad)
+            {
+                printf("Gamepad connected: %s\n", SDL_GameControllerName(gamepad));
+                break;
+            }
+        }
     }
 
     SDL_Window* win = SDL_CreateWindow(
@@ -290,6 +344,27 @@ int main(int argc, char* argv[])
             {
                 running = false;
             }
+            if (e.type == SDL_CONTROLLERDEVICEADDED)
+            {
+                if (!gamepad)
+                {
+                    gamepad = SDL_GameControllerOpen(e.cdevice.which);
+                    if (gamepad)
+                    {
+                        printf("Gamepad connected: %s\n", SDL_GameControllerName(gamepad));
+                    }
+                }
+            }
+            if (e.type == SDL_CONTROLLERDEVICEREMOVED)
+            {
+                if (gamepad && e.cdevice.which ==
+                                   SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamepad)))
+                {
+                    printf("Gamepad disconnected\n");
+                    SDL_GameControllerClose(gamepad);
+                    gamepad = NULL;
+                }
+            }
         }
         if (!running)
         {
@@ -347,6 +422,11 @@ int main(int argc, char* argv[])
         {
             next_frame_time = t + VM_FRAME_DT;
         }
+    }
+
+    if (gamepad)
+    {
+        SDL_GameControllerClose(gamepad);
     }
 
     SDL_free(scratch_rgba);
