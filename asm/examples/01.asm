@@ -1,0 +1,70 @@
+.macro BEGIN
+    PUSH.w R0
+    PUSH.w R1
+    PUSH.w R2
+    PUSH.w R3
+.endmacro
+
+.macro RET_R0
+    POP.w R3
+    POP.w R2
+    POP.w R1
+    PUSH.w R0
+    SWP.w
+    POP.w R0
+    SWP.w
+    RET
+.endmacro
+
+.section romb
+
+.equ SCREEN_WIDTH 180
+.equ SCREEN_HEIGHT 136
+.equ FRAMEBUFFER 0x0100
+
+DATA:
+.org 0x0090
+.string "Hello, World!"
+
+.org 0x0000
+
+LDI.w R0, 0
+SEED R0
+
+loop:
+    CALL gen_addr
+    POP.w R0
+    RAND R1
+    STR R0, R1
+    SYNC
+    JMP loop
+
+gen_x:
+    BEGIN
+gen_x_loop:
+    LDI.w R0, 0
+    RAND R0
+    CMP R0, SCREEN_WIDTH
+    JNC gen_x_loop
+    RET_R0
+
+gen_y:
+    BEGIN
+gen_y_loop:
+    LDI.w R0, 0
+    RAND R0
+    CMP R0, SCREEN_HEIGHT
+    JNC gen_y_loop
+    RET_R0
+
+gen_addr:
+    BEGIN
+    CALL gen_x
+    CALL gen_y
+    POP.w R0
+    LDI.w R2, SCREEN_WIDTH
+    MULR.w R0, R2
+    POP.w R1
+    ADDR.w R0, R1
+    ADD.w R0, 0x0100
+    RET_R0

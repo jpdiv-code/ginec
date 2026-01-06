@@ -2,6 +2,36 @@
 
 ginec - is non-existing console
 
+## Building and Running
+
+### Assembling Programs
+
+To assemble a program:
+
+```bash
+cd asm
+python3 gac.py examples/life.asm game.roma game.romb
+```
+
+This creates `game.roma` and `game.romb` files.
+
+### Running the VM
+
+The VM loads `game.roma` and `game.romb` from the current working directory:
+
+```bash
+make
+mv asm/game.roma asm/game.romb .
+./ginec
+```
+
+Or run from the asm directory:
+
+```bash
+cd asm
+../ginec
+```
+
 ## Technical Architecture
 
 ### Address Spaces

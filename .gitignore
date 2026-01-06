@@ -2,6 +2,8 @@
 dev/
 .vscode/
 compile_commands.json
+*.roma
+*.romb
 
 # Prerequisites
 *.d

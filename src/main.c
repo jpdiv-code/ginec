@@ -141,88 +141,36 @@ int main(int argc, char* argv[])
     memset(&vm, 0, sizeof(VM));
     vm.ip = 0x0000;
     vm.sp = 0xFFFF;
-    // TODO: Load ROMA and ROMB from some source
 
-    // Example program that fills random pixel with random color
+    FILE* roma_file = fopen("game.roma", "rb");
+    if (roma_file)
+    {
+        size_t roma_size = fread(vm.roma, 1, sizeof(vm.roma), roma_file);
+        fclose(roma_file);
+        printf("Loaded game.roma: %zu bytes\n", roma_size);
+    }
+    else
+    {
+        fprintf(stderr, "Warning: Could not open game.roma\n");
+    }
 
-    // Seed random generator
-    vm.romb[0x0000] = OP_LDIw;
-    vm.romb[0x0001] = 0;    // reg 0
-    vm.romb[0x0002] = 0xFF; // low byte
-    vm.romb[0x0003] = 0x00; // high byte (seed = 0x00FF)
-    vm.romb[0x0004] = OP_SEED;
-    vm.romb[0x0005] = 0; // seed from reg 0
-
-    // Loop: generate random X coordinate (0-179)
-    // reg 0 = X, reg 1 = Y, reg 2 = address, reg 3 = color
-
-    // Generate random X coordinate (0-179)
-    vm.romb[0x0006] = OP_RAND;
-    vm.romb[0x0007] = 0; // reg 0 = random 8-bit value
-
-    // Generate random Y coordinate (0-135)
-    vm.romb[0x000C] = OP_RAND;
-    vm.romb[0x000D] = 1; // reg 1 = random 8-bit value
-
-    // Calculate address: base + Y * 180 + X
-    // reg 2 = Y * 180
-    vm.romb[0x0012] = OP_MOVw;
-    vm.romb[0x0013] = 2; // reg 2 = dest
-    vm.romb[0x0014] = 1; // reg 1 = src (Y)
-
-    vm.romb[0x0015] = OP_MULw;
-    vm.romb[0x0016] = 2;    // reg 2
-    vm.romb[0x0017] = 0xB4; // low byte of 180
-    vm.romb[0x0018] = 0x00; // high byte of 180
-
-    // reg 2 = reg 2 + X
-    vm.romb[0x0019] = OP_ADDRw;
-    vm.romb[0x001A] = 2; // reg 2 (dest)
-    vm.romb[0x001B] = 0; // reg 0 (X)
-
-    // reg 2 = reg 2 + FB_BASE (0x0100)
-    vm.romb[0x001C] = OP_ADDw;
-    vm.romb[0x001D] = 2;    // reg 2
-    vm.romb[0x001E] = 0x00; // low byte of 0x0100
-    vm.romb[0x001F] = 0x01; // high byte of 0x0100
-
-    // Generate random color
-    vm.romb[0x0020] = OP_RAND;
-    vm.romb[0x0021] = 3; // reg 3 = random 8-bit color
-
-    // Store color at address (but only if within bounds)
-    // Check X < 180: compare reg 0 with 180
-    vm.romb[0x0022] = OP_CMPw;
-    vm.romb[0x0023] = 0;    // reg 0 (X)
-    vm.romb[0x0024] = 0xB4; // low byte of 180
-    vm.romb[0x0025] = 0x00; // high byte of 180
-
-    // Jump to loop if X >= 180 (carry not set means X >= 180)
-    vm.romb[0x0026] = OP_JNC;
-    vm.romb[0x0027] = 0x06; // low byte of loop address
-    vm.romb[0x0028] = 0x00; // high byte of loop address
-
-    // Check Y < 136: compare reg 1 with 136
-    vm.romb[0x0029] = OP_CMPw;
-    vm.romb[0x002A] = 1;    // reg 1 (Y)
-    vm.romb[0x002B] = 0x88; // low byte of 136
-    vm.romb[0x002C] = 0x00; // high byte of 136
-
-    // Jump to loop if Y >= 136
-    vm.romb[0x002D] = OP_JNC;
-    vm.romb[0x002E] = 0x06; // low byte of loop address
-    vm.romb[0x002F] = 0x00; // high byte of loop address
-
-    // Store color at address
-    vm.romb[0x0030] = OP_STR;
-    vm.romb[0x0031] = 2; // address in reg 2
-    vm.romb[0x0032] = 3; // color in reg 3
-
-    // Sync and loop
-    vm.romb[0x0033] = OP_SYNC;
-    vm.romb[0x0034] = OP_JMP;
-    vm.romb[0x0035] = 0x06; // low byte of loop address
-    vm.romb[0x0036] = 0x00; // high byte of loop address
+    FILE* romb_file = fopen("game.romb", "rb");
+    if (romb_file)
+    {
+        size_t romb_size = fread(vm.romb, 1, sizeof(vm.romb), romb_file);
+        fclose(romb_file);
+        printf("Loaded game.romb: %zu bytes\n", romb_size);
+    }
+    else
+    {
+        fprintf(stderr, "Error: Could not open game.romb\n");
+        SDL_free(scratch_rgba);
+        SDL_DestroyTexture(tex);
+        SDL_DestroyRenderer(ren);
+        SDL_DestroyWindow(win);
+        SDL_Quit();
+        return 1;
+    }
 
     bool running = true;
     double next_frame_time = now_seconds() + VM_FRAME_DT;
