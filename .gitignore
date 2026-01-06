@@ -44,10 +44,10 @@ compile_commands.json
 *.hex
 bin/
 ginec
-tests/test_alu
-tests/test_basic
-tests/test_control
-tests/test_memory
+test/test_alu
+test/test_basic
+test/test_control
+test/test_memory
 
 # Debug files
 *.dSYM/

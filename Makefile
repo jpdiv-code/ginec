@@ -20,7 +20,7 @@ TARGET = ginec
 
 TEST_VM_SRCS = src/vm.c
 TEST_VM_OBJS = $(TEST_VM_SRCS:.c=.o)
-TEST_SRCS = $(wildcard tests/test_*.c)
+TEST_SRCS = $(wildcard test/test_*.c)
 TEST_BINS = $(TEST_SRCS:.c=)
 
 .PHONY: all clean run test
@@ -33,7 +33,7 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-tests/test_%: tests/test_%.c $(TEST_VM_OBJS)
+test/test_%: test/test_%.c $(TEST_VM_OBJS)
 	$(CC) $(CFLAGS) $< $(TEST_VM_OBJS) -o $@
 
 test: $(TEST_BINS)
