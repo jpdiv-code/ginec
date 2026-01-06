@@ -48,6 +48,80 @@ static void sleep_until(double target_time)
 }
 
 // ==============================
+// INPUT UTILITIES
+// ==============================
+
+static uint16_t read_input_state(void)
+{
+    const uint8_t* keys = SDL_GetKeyboardState(NULL);
+    uint16_t input = 0;
+
+    if (keys[SDL_SCANCODE_UP])
+        input |= (1 << BTN_UP);
+    if (keys[SDL_SCANCODE_DOWN])
+        input |= (1 << BTN_DOWN);
+    if (keys[SDL_SCANCODE_LEFT])
+        input |= (1 << BTN_LEFT);
+    if (keys[SDL_SCANCODE_RIGHT])
+        input |= (1 << BTN_RIGHT);
+    if (keys[SDL_SCANCODE_Z])
+        input |= (1 << BTN_A);
+    if (keys[SDL_SCANCODE_X])
+        input |= (1 << BTN_B);
+    if (keys[SDL_SCANCODE_A])
+        input |= (1 << BTN_X);
+    if (keys[SDL_SCANCODE_S])
+        input |= (1 << BTN_Y);
+    if (keys[SDL_SCANCODE_Q])
+        input |= (1 << BTN_L);
+    if (keys[SDL_SCANCODE_W])
+        input |= (1 << BTN_R);
+    if (keys[SDL_SCANCODE_RETURN])
+        input |= (1 << BTN_START);
+    if (keys[SDL_SCANCODE_RSHIFT] || keys[SDL_SCANCODE_LSHIFT])
+        input |= (1 << BTN_SELECT);
+
+    return input;
+}
+
+static void update_input_mmio(VM* vm)
+{
+    uint16_t current_input = read_input_state();
+
+    uint16_t previous_input =
+        (uint16_t)(vm->ram[MIMO_INPUT_DOWN] | (vm->ram[MIMO_INPUT_DOWN + 1] << 8));
+
+    uint16_t pressed = current_input & ~previous_input;
+    uint16_t released = previous_input & ~current_input;
+
+    uint16_t existing_pressed =
+        (uint16_t)(vm->ram[MIMO_INPUT_PRESSED] | (vm->ram[MIMO_INPUT_PRESSED + 1] << 8));
+    uint16_t existing_released =
+        (uint16_t)(vm->ram[MIMO_INPUT_RELEASED] | (vm->ram[MIMO_INPUT_RELEASED + 1] << 8));
+
+    existing_pressed |= pressed;
+    existing_released |= released;
+
+    vm->ram[MIMO_INPUT_DOWN] = (uint8_t)(current_input & 0xFF);
+    vm->ram[MIMO_INPUT_DOWN + 1] = (uint8_t)((current_input >> 8) & 0xFF);
+
+    vm->ram[MIMO_INPUT_PRESSED] = (uint8_t)(existing_pressed & 0xFF);
+    vm->ram[MIMO_INPUT_PRESSED + 1] = (uint8_t)((existing_pressed >> 8) & 0xFF);
+
+    vm->ram[MIMO_INPUT_RELEASED] = (uint8_t)(existing_released & 0xFF);
+    vm->ram[MIMO_INPUT_RELEASED + 1] = (uint8_t)((existing_released >> 8) & 0xFF);
+}
+
+static void clear_input_latches(VM* vm)
+{
+    vm->ram[MIMO_INPUT_PRESSED] = 0;
+    vm->ram[MIMO_INPUT_PRESSED + 1] = 0;
+
+    vm->ram[MIMO_INPUT_RELEASED] = 0;
+    vm->ram[MIMO_INPUT_RELEASED + 1] = 0;
+}
+
+// ==============================
 // DRAW UTILITIES
 // ==============================
 
@@ -177,6 +251,10 @@ int main(int argc, char* argv[])
 
     while (running)
     {
+        clear_input_latches(&vm);
+
+        update_input_mmio(&vm);
+
         while (true)
         {
             StepResult res = vm_step(&vm);
@@ -217,8 +295,6 @@ int main(int argc, char* argv[])
         {
             break;
         }
-
-        // TODO: Update input states in MIMO region of RAM
 
         // ==============================
         // drawing sprite RU_I demo code

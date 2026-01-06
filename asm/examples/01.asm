@@ -22,6 +22,9 @@
 .equ SCREEN_HEIGHT 136
 .equ FRAMEBUFFER 0x0100
 
+.equ INPUT_PRESSED 0x0002
+.equ BTN_MASK_A 0x0010
+
 DATA:
 .org 0x0090
 .string "Hello, World!"
@@ -32,12 +35,26 @@ LDI.w R0, 0
 SEED R0
 
 loop:
+    CALL clear_on_pressed
     CALL gen_addr
     POP.w R0
     RAND R1
     STR R0, R1
     SYNC
     JMP loop
+
+clear_on_pressed:
+    BEGIN
+    LD.w R0, INPUT_PRESSED
+    AND.w R0, BTN_MASK_A
+    CMP.w R0, 0
+    JZ clear_on_pressed_done
+    LDI.w R0, FRAMEBUFFER
+    LDI.w R1, 0
+    LDI.w R2, SCREEN_WIDTH * SCREEN_HEIGHT
+    FILL.w R0, R1, R2
+clear_on_pressed_done:
+    RET_R0
 
 gen_x:
     BEGIN
