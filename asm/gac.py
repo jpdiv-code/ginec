@@ -110,6 +110,10 @@ OPCODES = {
     "JNCR": 0x7C,
     "JLTR": 0x7D,
     "JGER": 0x7E,
+    # CSTACK
+    "PUSHC.W": 0x80,
+    "POPC.W": 0x81,
+    "ADJCSP": 0x82,
     # CALLS
     "CALL": 0x90,
     "CALLR": 0x91,
@@ -212,6 +216,9 @@ INSTRUCTION_FORMATS = {
     "JNCR": (1, ["R"]),
     "JLTR": (1, ["R"]),
     "JGER": (1, ["R"]),
+    "PUSHC.W": (1, ["R"]),
+    "POPC.W": (1, ["R"]),
+    "ADJCSP": (1, ["I8"]),
     "CALL": (1, ["A16"]),
     "CALLR": (1, ["R"]),
     "RET": (0, []),
@@ -559,7 +566,9 @@ class Assembler:
                 if directive == "section":
                     if len(tokens) < 2:
                         self.error("Section name expected", line_num)
-                    section = tokens[1].value.lower()
+                    # .section can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    section = tokens[start_idx].value.lower()
                     if section not in ["roma", "romb"]:
                         self.error(f"Invalid section: {section}", line_num)
                     self.current_section = section
@@ -567,17 +576,21 @@ class Assembler:
                 elif directive == "org":
                     if len(tokens) < 2:
                         self.error("Address expected", line_num)
-                    addr = self.evaluate_expression(tokens[1].value, line_num)
+                    # .org can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    addr = self.evaluate_expression(tokens[start_idx].value, line_num)
                     self.section_addresses[self.current_section] = addr
 
                 elif directive == "equ":
-                    if len(tokens) < 3:
+                    if len(tokens) < 4:
                         self.error(
-                            "Constant definition requires name and value", line_num
+                            "Constant definition requires name, comma, and value", line_num
                         )
+                    if tokens[2].type != "COMMA":
+                        self.error("Expected comma after constant name", line_num)
                     name = tokens[1].value
                     value = self.evaluate_expression(
-                        " ".join(t.value for t in tokens[2:]), line_num
+                        " ".join(t.value for t in tokens[3:]), line_num
                     )
                     self.constants[name] = value
 
@@ -598,13 +611,17 @@ class Assembler:
                 elif directive == "string":
                     if len(tokens) < 2:
                         self.error("String expected", line_num)
-                    string_val = tokens[1].value
+                    # .string can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    string_val = tokens[start_idx].value
                     self.section_addresses[self.current_section] += len(string_val) + 1
 
                 elif directive == "reserve":
                     if len(tokens) < 2:
                         self.error("Size expected", line_num)
-                    size = self.evaluate_expression(tokens[1].value, line_num)
+                    # .reserve can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    size = self.evaluate_expression(tokens[start_idx].value, line_num)
                     self.section_addresses[self.current_section] += size
 
                 elif directive == "incbin":
@@ -776,11 +793,15 @@ class Assembler:
                 directive = tokens[0].value
 
                 if directive == "section":
-                    section = tokens[1].value.lower()
+                    # .section can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    section = tokens[start_idx].value.lower()
                     self.current_section = section
 
                 elif directive == "org":
-                    addr = self.evaluate_expression(tokens[1].value, line_num)
+                    # .org can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    addr = self.evaluate_expression(tokens[start_idx].value, line_num)
                     self.section_addresses[self.current_section] = addr
 
                 elif directive == "equ":
@@ -811,13 +832,17 @@ class Assembler:
                         self._emit_word(val)
 
                 elif directive == "string":
-                    string_val = self._parse_string(tokens[1].value)
+                    # .string can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    string_val = self._parse_string(tokens[start_idx].value)
                     for byte in string_val:
                         self._emit_byte(byte)
                     self._emit_byte(0)  # Null terminator
 
                 elif directive == "reserve":
-                    size = self.evaluate_expression(tokens[1].value, line_num)
+                    # .reserve can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    size = self.evaluate_expression(tokens[start_idx].value, line_num)
                     for _ in range(size):
                         self._emit_byte(0)
 
@@ -842,7 +867,9 @@ class Assembler:
                         self.error(f"Cannot read file {filename}: {str(e)}", line_num)
 
                 elif directive == "incbmp":
-                    filename = tokens[1].value.strip('"')
+                    # .incbmp can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    filename = tokens[start_idx].value.strip('"')
                     try:
                         filepath = Path(self.current_file).parent / filename
                         data = self._read_bmp(filepath)
@@ -854,7 +881,9 @@ class Assembler:
                         )
 
                 elif directive == "incwav":
-                    filename = tokens[1].value.strip('"')
+                    # .incwav can work with or without comma for single argument
+                    start_idx = 2 if len(tokens) > 2 and tokens[1].type == "COMMA" else 1
+                    filename = tokens[start_idx].value.strip('"')
                     try:
                         filepath = Path(self.current_file).parent / filename
                         data = self._read_wav(filepath)

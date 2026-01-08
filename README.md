@@ -16,7 +16,7 @@ python3 gac.py examples/life.asm ../game.roma ../game.romb
 or:
 
 ```bash
-make asm-01
+make example/02
 ```
 
 This creates `game.roma` and `game.romb` files.
@@ -208,12 +208,14 @@ The VM runs in a single thread.
 
 Total RAM size: **65,536 bytes**
 
-| Address Range   | Size     | Purpose                       |
-| --------------- | -------- | ----------------------------- |
-| `0x0000–0x00FF` | 256 B    | MMIO (input, audio)           |
-| `0x0100–0x609F` | 24,480 B | Framebuffer (180 × 136)       |
-| `0x60A0–0xFFFF` | 40,800 B | General-purpose RAM and stack |
+| Address Range   | Size     | Purpose                            |
+| --------------- | -------- | ---------------------------------- |
+| `0x0000–0x00FF` | 256 B    | MMIO (input, audio)                |
+| `0x0100–0x609F` | 24,480 B | Framebuffer (180 × 136)            |
+| `0x60A0–0xFDFF` | 40,288 B | General-purpose RAM and data stack |
+| `0xFE00–0xFFFF` | 512 B    | Call stack (CALL/RET)              |
 
-Initial stack pointer: SP = 0xFFFF
+Initial stack pointer: SP = 0xFDFF  
+Initial call stack pointer: CSP = 0xFFFF
 
 Out-of-bounds memory access is undefined behavior.
