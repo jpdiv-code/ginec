@@ -51,6 +51,7 @@ test/test_reg
 test/test_stack
 test/test_control
 test/test_memory
+test/test_callstack
 
 # Debug files
 *.dSYM/

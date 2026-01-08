@@ -8,7 +8,8 @@ static inline void init_test_vm(VM* vm)
 {
     memset(vm, 0, sizeof(VM));
     vm->ip = 0x0000;
-    vm->sp = 0xFFFF;
+    vm->sp = 0xFDFF;
+    vm->csp = 0xFFFF;
     vm->flags = 0;
 }
 

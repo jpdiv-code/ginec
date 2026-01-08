@@ -510,6 +510,7 @@ int test_call_ret(void)
     VM vm;
     init_test_vm(&vm);
 
+    uint16_t csp_before = vm.csp;
     uint16_t sp_before = vm.sp;
 
     // Program at 0x0000: CALL 0x0100
@@ -523,16 +524,18 @@ int test_call_ret(void)
     vm_step(&vm); // Execute CALL
 
     ASSERT(vm.ip == 0x0100, "CALL should jump to 0x0100, got 0x%04X", vm.ip);
-    ASSERT(vm.sp == sp_before - 2, "CALL should push return address (2 bytes)");
+    ASSERT(vm.csp == csp_before - 2, "CALL should push return address to call stack (2 bytes)");
+    ASSERT(vm.sp == sp_before, "CALL should not affect data stack");
 
-    // Check return address on stack (little-endian)
-    uint16_t return_addr = (uint16_t)(vm.ram[sp_before - 1] | (vm.ram[sp_before] << 8));
+    // Check return address on call stack (little-endian)
+    uint16_t return_addr = (uint16_t)(vm.ram[csp_before - 1] | (vm.ram[csp_before] << 8));
     ASSERT(return_addr == 3, "Return address should be 3 (after CALL), got 0x%04X", return_addr);
 
     vm_step(&vm); // Execute RET
 
     ASSERT(vm.ip == 3, "RET should return to address 3, got 0x%04X", vm.ip);
-    ASSERT(vm.sp == sp_before, "RET should restore SP");
+    ASSERT(vm.csp == csp_before, "RET should restore CSP");
+    ASSERT(vm.sp == sp_before, "RET should not affect data stack");
 
     return 1;
 }
@@ -543,6 +546,7 @@ int test_callr(void)
     init_test_vm(&vm);
 
     vm.reg[2] = 0x0200;
+    uint16_t csp_before = vm.csp;
     uint16_t sp_before = vm.sp;
 
     // Program: CALLR r2
@@ -555,11 +559,14 @@ int test_callr(void)
     vm_step(&vm); // Execute CALLR
 
     ASSERT(vm.ip == 0x0200, "CALLR should jump to address in r2, got 0x%04X", vm.ip);
-    ASSERT(vm.sp == sp_before - 2, "CALLR should push return address");
+    ASSERT(vm.csp == csp_before - 2, "CALLR should push return address to call stack");
+    ASSERT(vm.sp == sp_before, "CALLR should not affect data stack");
 
     vm_step(&vm); // Execute RET
 
     ASSERT(vm.ip == 2, "RET should return after CALLR, got 0x%04X", vm.ip);
+    ASSERT(vm.csp == csp_before, "RET should restore CSP");
+    ASSERT(vm.sp == sp_before, "RET should not affect data stack");
 
     return 1;
 }
