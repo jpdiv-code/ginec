@@ -90,14 +90,29 @@ Instructions explicitly specify which address space they operate on.
 
 ## 6. Stack model
 
-- The VM has a **hardware stack** located in RAM.
-- The stack pointer (`SP`) grows **downwards**.
+The VM has **two independent hardware stacks** located in RAM:
+
+### 6.1 Data Stack
+
+- The data stack is used by `PUSH`, `POP`, `DUP`, `SWP`, and `ADJSP` instructions.
+- The data stack pointer (`SP`) grows **downwards**.
 - Push operations decrement `SP`, pop operations increment it.
-- Stack operations are defined explicitly by `PUSH`, `POP`, `CALL`, `RET`, and `ADJSP`.
+- Initial `SP` value: `0xFE00`
+- Data stack occupies RAM range `0x60A0–0xFDFF` (grows downwards from `0xFE00`)
 
-### 6.1 `ADJSP`
+### 6.2 Call Stack
 
-- `ADJSP imm8` adjusts the stack pointer by a **signed** 8-bit value:
+- The call stack is used by `CALL`, `CALLR`, `RET`, `PUSHC.w`, `POPC.w`, and `ADJCSP` instructions.
+- The call stack pointer (`CSP`) grows **downwards**.
+- Call operations decrement `CSP`, return operations increment it.
+- Initial `CSP` value: `0xFFFF`
+- Call stack occupies RAM range `0xFE00–0xFFFF` (512 bytes, 256 addresses)
+- This separation ensures that function calls do not interfere with data stack operations.
+- `PUSHC.w` and `POPC.w` allow manual manipulation of the call stack for advanced use cases.
+
+### 6.3 `ADJSP`
+
+- `ADJSP imm8` adjusts the **data stack pointer** by a **signed** 8-bit value:
 
   ```
   SP = SP + (int8_t)imm8
@@ -108,6 +123,20 @@ Instructions explicitly specify which address space they operate on.
   - allocating local variables,
   - cleaning up function arguments,
   - stack frame management.
+
+### 6.4 `ADJCSP`
+
+- `ADJCSP imm8` adjusts the **call stack pointer** by a **signed** 8-bit value:
+
+  ```
+  CSP = CSP + (int8_t)imm8
+  ```
+
+- This instruction is typically used for:
+
+  - advanced call stack manipulation,
+  - stack unwinding,
+  - custom calling conventions.
 
 ---
 
@@ -234,6 +263,8 @@ The pseudocode column uses the following conventions:
 | `push16(val)`             | `sp -= 2; write16(ram, sp, val)`                                         |
 | `pop8()`                  | `tmp = ram[sp]; sp += 1; return tmp`                                     |
 | `pop16()`                 | `tmp = read16(ram, sp); sp += 2; return tmp`                             |
+| `call_push16(val)`        | `csp -= 2; write16(ram, csp, val)`                                       |
+| `call_pop16()`            | `tmp = read16(ram, csp); csp += 2; return tmp`                           |
 | `flags(expr)`             | Update Z, N, C, V flags based on expression result (no store)            |
 
 ---
@@ -372,9 +403,9 @@ The following table lists all instructions supported by the VM.
 | 7D | JLTR | RA | 2 | if (N != V) ip = RA | same |  |
 | 7E | JGER | RA | 2 | if (N == V) ip = RA | same |  |
 | 7F |  |  |  |  |  |  |
-| 80 |  |  |  |  |  |  |
-| 81 |  |  |  |  |  |  |
-| 82 |  |  |  |  |  |  |
+| 80 | PUSHC.w | RS | 2 | call_push16(RS) | put a 16-bit value from the RS reg on top of the call stack | CSTACK |
+| 81 | POPC.w | RD | 2 | RD = call_pop16() | pop a 16-bit value from the call stack and put it into the RD reg |  |
+| 82 | ADJCSP | imm8 | 2 | csp += (i8)imm8 | add signed 8-bit immediate value to the CSP |  |
 | 83 |  |  |  |  |  |  |
 | 84 |  |  |  |  |  |  |
 | 85 |  |  |  |  |  |  |
@@ -388,6 +419,6 @@ The following table lists all instructions supported by the VM.
 | 8D |  |  |  |  |  |  |
 | 8E |  |  |  |  |  |  |
 | 8F |  |  |  |  |  |  |
-| 90 | CALL | addr | 3 | push16(ip + 3); ip = addr | push next instruction address on stack, jump to addr address | CALLS |
-| 91 | CALLR | RA | 2 | push16(ip + 2); ip = RA | same as CALL, but addr lies in the reg[RA] |  |
-| 92 | RET |  | 1 | ip = pop16() | pop return address from stack and jump to it |  |
+| 90 | CALL | addr | 3 | call_push16(ip + 3); ip = addr | push next instruction address on call stack, jump to addr address | CALLS |
+| 91 | CALLR | RA | 2 | call_push16(ip + 2); ip = RA | same as CALL, but addr lies in the reg[RA] |  |
+| 92 | RET |  | 1 | ip = call_pop16() | pop return address from call stack and jump to it |  |

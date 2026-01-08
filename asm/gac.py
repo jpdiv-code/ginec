@@ -110,6 +110,10 @@ OPCODES = {
     "JNCR": 0x7C,
     "JLTR": 0x7D,
     "JGER": 0x7E,
+    # CSTACK
+    "PUSHC.W": 0x80,
+    "POPC.W": 0x81,
+    "ADJCSP": 0x82,
     # CALLS
     "CALL": 0x90,
     "CALLR": 0x91,
@@ -212,6 +216,9 @@ INSTRUCTION_FORMATS = {
     "JNCR": (1, ["R"]),
     "JLTR": (1, ["R"]),
     "JGER": (1, ["R"]),
+    "PUSHC.W": (1, ["R"]),
+    "POPC.W": (1, ["R"]),
+    "ADJCSP": (1, ["I8"]),
     "CALL": (1, ["A16"]),
     "CALLR": (1, ["R"]),
     "RET": (0, []),

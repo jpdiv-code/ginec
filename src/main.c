@@ -214,7 +214,8 @@ int main(int argc, char* argv[])
     VM vm;
     memset(&vm, 0, sizeof(VM));
     vm.ip = 0x0000;
-    vm.sp = 0xFFFF;
+    vm.sp = 0xFE00;
+    vm.csp = 0xFFFF;
 
     FILE* roma_file = fopen("game.roma", "rb");
     if (roma_file)
