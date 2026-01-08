@@ -1354,20 +1354,20 @@ StepResult vm_step(VM* vm)
         uint16_t value = vm->reg[rs];
         uint8_t low = (uint8_t)(value & 0x00FF);
         uint8_t high = (uint8_t)((value >> 8) & 0x00FF);
+        vm->ram[vm->csp] = high;
         vm->csp--;
         vm->ram[vm->csp] = low;
         vm->csp--;
-        vm->ram[vm->csp] = high;
         break;
     }
     case OP_POPCw:
     {
         uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
-        uint8_t high = vm->ram[vm->csp];
         vm->csp++;
         uint8_t low = vm->ram[vm->csp];
         vm->csp++;
+        uint8_t high = vm->ram[vm->csp];
         uint16_t value = (uint16_t)(low | (high << 8));
         vm->reg[rd] = value;
         break;
@@ -1396,10 +1396,10 @@ StepResult vm_step(VM* vm)
         uint16_t ret_addr = vm->ip;
         uint8_t ret_low = (uint8_t)(ret_addr & 0x00FF);
         uint8_t ret_high = (uint8_t)((ret_addr >> 8) & 0x00FF);
+        vm->ram[vm->csp] = ret_high;
         vm->csp--;
         vm->ram[vm->csp] = ret_low;
         vm->csp--;
-        vm->ram[vm->csp] = ret_high;
         vm->ip = addr;
         break;
     }
@@ -1411,19 +1411,19 @@ StepResult vm_step(VM* vm)
         uint16_t ret_addr = vm->ip;
         uint8_t ret_low = (uint8_t)(ret_addr & 0x00FF);
         uint8_t ret_high = (uint8_t)((ret_addr >> 8) & 0x00FF);
+        vm->ram[vm->csp] = ret_high;
         vm->csp--;
         vm->ram[vm->csp] = ret_low;
         vm->csp--;
-        vm->ram[vm->csp] = ret_high;
         vm->ip = addr;
         break;
     }
     case OP_RET:
     {
-        uint8_t ret_high = vm->ram[vm->csp];
         vm->csp++;
         uint8_t ret_low = vm->ram[vm->csp];
         vm->csp++;
+        uint8_t ret_high = vm->ram[vm->csp];
         uint16_t ret_addr = 0x0000;
         ret_addr |= (uint16_t)ret_low;
         ret_addr |= (uint16_t)(ret_high << 8);

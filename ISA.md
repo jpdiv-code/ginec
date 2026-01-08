@@ -259,12 +259,12 @@ The pseudocode column uses the following conventions:
 | `(i8)`, `(i16)`           | Cast to signed 8-bit / 16-bit                                            |
 | `read16(mem, addr)`       | Read 16-bit little-endian: `mem[addr] \| (mem[addr+1] << 8)`             |
 | `write16(mem, addr, val)` | Write 16-bit little-endian: `mem[addr] = lo(val); mem[addr+1] = hi(val)` |
-| `push8(val)`              | `sp -= 1; ram[sp] = val`                                                 |
-| `push16(val)`             | `sp -= 2; write16(ram, sp, val)`                                         |
-| `pop8()`                  | `tmp = ram[sp]; sp += 1; return tmp`                                     |
-| `pop16()`                 | `tmp = read16(ram, sp); sp += 2; return tmp`                             |
-| `call_push16(val)`        | `csp -= 2; write16(ram, csp, val)`                                       |
-| `call_pop16()`            | `tmp = read16(ram, csp); csp += 2; return tmp`                           |
+| `push8(val)`              | `ram[sp] = val; sp -= 1`                                                 |
+| `push16(val)`             | `ram[sp] = hi(val); sp -= 1; ram[sp] = lo(val); sp -= 1`                |
+| `pop8()`                  | `sp += 1; tmp = ram[sp]; return tmp`                                     |
+| `pop16()`                 | `sp += 1; lo = ram[sp]; sp += 1; hi = ram[sp]; return lo \| (hi << 8)`   |
+| `call_push16(val)`        | `ram[csp] = hi(val); csp -= 1; ram[csp] = lo(val); csp -= 1`            |
+| `call_pop16()`            | `csp += 1; lo = ram[csp]; csp += 1; hi = ram[csp]; return lo \| (hi << 8)` |
 | `flags(expr)`             | Update Z, N, C, V flags based on expression result (no store)            |
 
 ---
