@@ -215,7 +215,7 @@ Total RAM size: **65,536 bytes**
 | `0x60A0–0xFDFF` | 40,288 B | General-purpose RAM and data stack |
 | `0xFE00–0xFFFF` | 512 B    | Call stack (CALL/RET)              |
 
-Initial stack pointer: SP = 0xFE00  
+Initial stack pointer: SP = 0xFDFF  
 Initial call stack pointer: CSP = 0xFFFF
 
 Out-of-bounds memory access is undefined behavior.

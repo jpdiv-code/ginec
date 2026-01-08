@@ -97,8 +97,8 @@ The VM has **two independent hardware stacks** located in RAM:
 - The data stack is used by `PUSH`, `POP`, `DUP`, `SWP`, and `ADJSP` instructions.
 - The data stack pointer (`SP`) grows **downwards**.
 - Push operations decrement `SP`, pop operations increment it.
-- Initial `SP` value: `0xFE00`
-- Data stack occupies RAM range `0x60A0–0xFDFF` (grows downwards from `0xFE00`)
+- Initial `SP` value: `0xFDFF`
+- Data stack occupies RAM range `0x60A0–0xFDFF` (grows downwards from `0xFDFF`)
 
 ### 6.2 Call Stack
 
