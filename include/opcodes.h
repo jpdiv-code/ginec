@@ -38,6 +38,10 @@ enum
 
     OP_ADJSP = 0x1E,
 
+    OP_PUSHCw = 0x80,
+    OP_POPCw = 0x81,
+    OP_ADJCSP = 0x82,
+
     // RAM
     OP_LD = 0x20,
     OP_LDw = 0x21,

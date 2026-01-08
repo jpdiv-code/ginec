@@ -29,6 +29,9 @@
 
 #define VM_FRAME_DT (1.0f / 24.0f) // Fixed timestep for VM frame updates (24 FPS)
 
+#define CALL_STACK_BASE 0xFE00 // Base address for call stack in RAM
+#define CALL_STACK_SIZE 0x0200 // Size of call stack (512 bytes)
+
 // ==============================
 // INPUT BIT LAYOUT (12 buttons)
 // ==============================
@@ -56,7 +59,8 @@ typedef enum
 typedef struct VM
 {
     uint16_t ip;             // Instruction pointer, targets romb
-    uint16_t sp;             // Stack pointer, targets ram
+    uint16_t sp;             // Stack pointer (data stack), targets ram
+    uint16_t csp;            // Call stack pointer, targets ram (0xFE00-0xFFFF)
     uint8_t flags;           // CPU flags: 0000VCNZ (Z=zero, N=negative, C=carry, V=overflow)
     uint16_t reg[REG_COUNT]; // General purpose registers
     uint8_t roma[ROMA_SIZE]; // Assets ROM (contains resources like images, sounds, etc)

@@ -1344,6 +1344,43 @@ StepResult vm_step(VM* vm)
     }
 
         // =====
+        // CALL STACK
+        // =====
+
+    case OP_PUSHCw:
+    {
+        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint16_t value = vm->reg[rs];
+        uint8_t low = (uint8_t)(value & 0x00FF);
+        uint8_t high = (uint8_t)((value >> 8) & 0x00FF);
+        vm->ram[vm->csp] = high;
+        vm->csp--;
+        vm->ram[vm->csp] = low;
+        vm->csp--;
+        break;
+    }
+    case OP_POPCw:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        vm->csp++;
+        uint8_t low = vm->ram[vm->csp];
+        vm->csp++;
+        uint8_t high = vm->ram[vm->csp];
+        uint16_t value = (uint16_t)(low | (high << 8));
+        vm->reg[rd] = value;
+        break;
+    }
+    case OP_ADJCSP:
+    {
+        int8_t offset = (int8_t)vm->romb[vm->ip];
+        vm->ip++;
+        vm->csp = (uint16_t)((int32_t)vm->csp + (int32_t)offset);
+        break;
+    }
+
+        // =====
         // CALLS
         // =====
 
@@ -1359,10 +1396,10 @@ StepResult vm_step(VM* vm)
         uint16_t ret_addr = vm->ip;
         uint8_t ret_low = (uint8_t)(ret_addr & 0x00FF);
         uint8_t ret_high = (uint8_t)((ret_addr >> 8) & 0x00FF);
-        vm->ram[vm->sp] = ret_high;
-        vm->sp--;
-        vm->ram[vm->sp] = ret_low;
-        vm->sp--;
+        vm->ram[vm->csp] = ret_high;
+        vm->csp--;
+        vm->ram[vm->csp] = ret_low;
+        vm->csp--;
         vm->ip = addr;
         break;
     }
@@ -1374,19 +1411,19 @@ StepResult vm_step(VM* vm)
         uint16_t ret_addr = vm->ip;
         uint8_t ret_low = (uint8_t)(ret_addr & 0x00FF);
         uint8_t ret_high = (uint8_t)((ret_addr >> 8) & 0x00FF);
-        vm->ram[vm->sp] = ret_high;
-        vm->sp--;
-        vm->ram[vm->sp] = ret_low;
-        vm->sp--;
+        vm->ram[vm->csp] = ret_high;
+        vm->csp--;
+        vm->ram[vm->csp] = ret_low;
+        vm->csp--;
         vm->ip = addr;
         break;
     }
     case OP_RET:
     {
-        vm->sp++;
-        uint8_t ret_low = vm->ram[vm->sp];
-        vm->sp++;
-        uint8_t ret_high = vm->ram[vm->sp];
+        vm->csp++;
+        uint8_t ret_low = vm->ram[vm->csp];
+        vm->csp++;
+        uint8_t ret_high = vm->ram[vm->csp];
         uint16_t ret_addr = 0x0000;
         ret_addr |= (uint16_t)ret_low;
         ret_addr |= (uint16_t)(ret_high << 8);
