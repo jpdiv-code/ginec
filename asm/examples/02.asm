@@ -1,4 +1,4 @@
-.inc 01-utils.asm
+.inc utils.asm
 
 ; Game constants
 .equ CHAR_SIZE, 8
@@ -49,16 +49,14 @@ game_loop:
 
 ; Clear the screen
 clear_screen:
-    BEGIN
     LDI.w R0, FRAMEBUFFER
     LDI.w R1, BG_COLOR
     LDI.w R2, SCREEN_WIDTH * SCREEN_HEIGHT
     FILL R0, R1, R2
-    RET_R0
+    RET
 
 ; Handle player input
 handle_input:
-    BEGIN
     LD.w R0, INPUT_DOWN
     
     ; Check Z for jump (only if grounded)
@@ -95,11 +93,10 @@ check_right:
     ST.w CHAR_VX, R2
 
 input_done:
-    RET_R0
+    RET
 
 ; Apply gravity to velocity
 apply_gravity:
-    BEGIN
     LD.w R0, CHAR_VY
     INC.w R0
     ST.w CHAR_VY, R0
@@ -114,11 +111,10 @@ gravity_cap:
     LDI.w R0, MAX_FALL_SPEED
     ST.w CHAR_VY, R0
 gravity_done:
-    RET_R0
+    RET
 
 ; Update character position based on velocity
 update_position:
-    BEGIN
     ; Update X position
     LD.w R0, CHAR_X
     LD.w R1, CHAR_VX
@@ -133,11 +129,10 @@ update_position:
     LD.w R1, CHAR_VY
     ADDR.w R0, R1
     ST.w CHAR_Y, R0
-    RET_R0
+    RET
 
 ; Check collisions with screen borders
 check_collisions:
-    BEGIN
     ; Check left wall (X < 0)
     LD.w R0, CHAR_X
     CMP.w R0, 0x8000  ; Check if negative (signed)
@@ -191,11 +186,10 @@ check_ceiling:
     ST.w CHAR_VY, R0
 
 collision_done:
-    RET_R0
+    RET
 
 ; Draw the character square
 draw_character:
-    BEGIN
     LD.w R0, CHAR_Y
     ; Calculate starting screen address: FRAMEBUFFER + Y * SCREEN_WIDTH + X
     LDI.w R1, SCREEN_WIDTH
@@ -227,4 +221,4 @@ draw_row_loop:
     JMP draw_row_loop
 
 draw_done:
-    RET_R0
+    RET

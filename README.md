@@ -16,7 +16,7 @@ python3 gac.py examples/life.asm ../game.roma ../game.romb
 or:
 
 ```bash
-make asm-01
+make example/02
 ```
 
 This creates `game.roma` and `game.romb` files.
