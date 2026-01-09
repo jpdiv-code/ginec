@@ -373,12 +373,12 @@ STRI.w R1, 10, R0 ; Store word with offset
 #### ROMA Memory Operations
 
 ```asm
-LDA R0, 0x2000       ; Load 8-bit from ROMA
-LDA.w R0, 0x2000     ; Load 16-bit from ROMA
-LDAR R0, R1          ; Load via register
-LDAR.w R0, R1        ; Load word via register
-CPYRA R0, R1, 100    ; Copy 100 bytes from ROMA[R1] to RAM[R0]
-SPRA R0, R1, 16, 16  ; Render 16x16 sprite from ROMA[R1] at coords in R0 (x=low, y=high)
+LDA R0, 0x2000        ; Load 8-bit from ROMA
+LDA.w R0, 0x2000      ; Load 16-bit from ROMA
+LDAR R0, R1           ; Load via register
+LDAR.w R0, R1         ; Load word via register
+CPYRA R0, R1, 100     ; Copy 100 bytes from ROMA[R1] to RAM[R0]
+SPRRA R0, R1, 16, 16  ; Render 16x16 sprite from ROMA[R1] at coords in R0 (x=low, y=high)
 ```
 
 #### Arithmetic and Logic (Immediate)

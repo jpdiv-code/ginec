@@ -328,9 +328,9 @@ The following table lists all instructions supported by the VM.
 | 32 |  |  |  |  |  |  |
 | 33 | LDAR | RD RA | 3 | lo(RD) = roma[RA] | same as LDA[.w], but addr lies in the reg[RA] |  |
 | 34 | LDAR.w | RD RA | 3 | RD = read16(roma, RA) | same |  |
-| 35 | CPYRA | RD RS cnt | 4 | for i in 0..cnt-1: ram[RD+i] = roma[RS+i] | copy cnt bytes from roma[RS] to ram[RD] |  |
-| 36 | SPRA | RC RA w h | 5 | render sprite from roma[RA] (w×h pixels) to framebuffer at coords in RC (x=lo, y=hi) | render sprite from ROMA to framebuffer |  |
-| 37 |  |  |  |  |  |  |
+| 35 |  |  |  |  |  |  |
+| 36 | CPYRA | RD RS cnt | 4 | for i in 0..cnt-1: ram[RD+i] = roma[RS+i] | copy cnt bytes from roma[RS] to ram[RD] |  |
+| 37 | SPRRA | RC RA w h | 5 | render sprite from roma[RA] (w×h pixels) to framebuffer at coords in RC (x=lo, y=hi) | render sprite from ROMA to framebuffer |  |
 | 38 |  |  |  |  |  |  |
 | 39 |  |  |  |  |  |  |
 | 3A |  |  |  |  |  |  |

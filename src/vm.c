@@ -647,7 +647,7 @@ StepResult vm_step(VM* vm)
         }
         break;
     }
-    case OP_SPRA:
+    case OP_SPRRA:
     {
         uint8_t rc = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
