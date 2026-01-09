@@ -77,7 +77,7 @@ build_release: $(RELEASE_OBJS)
 	$(CC) $(BASE_CFLAGS) $(RELEASE_OBJS) -o $(RELEASE_TARGET) $(LDFLAGS) $(SDL2_LDFLAGS)
 
 build_debug: $(DEBUG_OBJS)
-	$(CC) $(BASE_CFLAGS) -DDEBUG_MODE -g -Ilib $(DEBUG_OBJS) -o $(DEBUG_TARGET) $(LDFLAGS) -lpthread $(SDL2_LDFLAGS)
+	$(CC) $(BASE_CFLAGS) $(DEBUG_OBJS) -o $(DEBUG_TARGET) $(LDFLAGS) -lpthread $(SDL2_LDFLAGS)
 
 # Clean targets
 clean_release:
