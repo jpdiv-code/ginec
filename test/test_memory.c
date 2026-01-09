@@ -458,7 +458,7 @@ int test_spra_basic(void)
         {
             uint16_t screen_x = 10 + col;
             uint16_t screen_y = 20 + row;
-            uint16_t fb_addr = RAM_FB_BASE + (screen_y * FB_W) + screen_x;
+            uint16_t fb_addr = (uint16_t)(RAM_FB_BASE + (screen_y * FB_W) + screen_x);
             uint8_t expected = (uint8_t)(0x10 + row * 4 + col);
 
             ASSERT(vm.ram[fb_addr] == expected,
