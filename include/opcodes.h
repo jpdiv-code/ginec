@@ -65,6 +65,9 @@ enum
     OP_LDAR = 0x33,
     OP_LDARw = 0x34,
 
+    OP_CPYRA = 0x35,
+    OP_SPRA = 0x36,
+
     // ALU
     OP_ADD = 0x40,
     OP_SUB = 0x41,

@@ -53,6 +53,8 @@ OPCODES = {
     "LDA.W": 0x31,
     "LDAR": 0x33,
     "LDAR.W": 0x34,
+    "CPYRA": 0x35,
+    "SPRA": 0x36,
     # ALU
     "ADD": 0x40,
     "SUB": 0x41,
@@ -161,6 +163,8 @@ INSTRUCTION_FORMATS = {
     "LDA.W": (2, ["R", "A16"]),
     "LDAR": (2, ["R", "R"]),
     "LDAR.W": (2, ["R", "R"]),
+    "CPYRA": (3, ["R", "R", "I8"]),
+    "SPRA": (4, ["R", "R", "I8", "I8"]),
     "ADD": (2, ["R", "I8"]),
     "SUB": (2, ["R", "I8"]),
     "MUL": (2, ["R", "I8"]),
