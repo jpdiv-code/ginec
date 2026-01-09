@@ -629,6 +629,66 @@ StepResult vm_step(VM* vm)
         break;
     }
 
+    case OP_CPYRA:
+    {
+        uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t count = vm->romb[vm->ip];
+        vm->ip++;
+
+        uint16_t ram_addr = vm->reg[rd];
+        uint16_t roma_addr = vm->reg[rs];
+
+        for (uint16_t i = 0; i < count; i++)
+        {
+            vm->ram[ram_addr + i] = vm->roma[roma_addr + i];
+        }
+        break;
+    }
+    case OP_SPRA:
+    {
+        uint8_t rc = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
+        vm->ip++;
+        uint8_t width = vm->romb[vm->ip];
+        vm->ip++;
+        uint8_t height = vm->romb[vm->ip];
+        vm->ip++;
+
+        uint8_t x = (uint8_t)(vm->reg[rc] & 0x00FF);
+        uint8_t y = (uint8_t)((vm->reg[rc] >> 8) & 0x00FF);
+        uint16_t sprite_addr = vm->reg[ra];
+
+        // Render sprite to framebuffer (starts at 0x0100, size 180x136)
+        const uint16_t fb_start = RAM_FB_BASE;
+        const uint16_t fb_width = FB_W;
+        const uint16_t fb_height = FB_H;
+
+        for (uint16_t row = 0; row < height; row++)
+        {
+            uint16_t screen_y = y + row;
+            if (screen_y >= fb_height)
+                break;
+
+            for (uint16_t col = 0; col < width; col++)
+            {
+                uint16_t screen_x = x + col;
+                if (screen_x >= fb_width)
+                    continue;
+
+                uint16_t fb_addr = fb_start + (screen_y * fb_width) + screen_x;
+                uint16_t sprite_offset = (row * width) + col;
+                uint16_t roma_addr = sprite_addr + sprite_offset;
+
+                vm->ram[fb_addr] = vm->roma[roma_addr];
+            }
+        }
+        break;
+    }
+
         // =====
         // ALU
         // =====
