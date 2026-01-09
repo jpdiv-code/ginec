@@ -443,7 +443,7 @@ int test_spra_basic(void)
     }
 
     // Program: SPRA r0, r1, 4, 4 (4x4 sprite)
-    vm.romb[0] = OP_SPRA;
+    vm.romb[0] = OP_SPRRA;
     vm.romb[1] = 0; // rc = r0 (coords)
     vm.romb[2] = 1; // ra = r1 (sprite address)
     vm.romb[3] = 4; // width
@@ -492,7 +492,7 @@ int test_spra_at_origin(void)
     }
 
     // Program: SPRA r0, r1, 2, 2
-    vm.romb[0] = OP_SPRA;
+    vm.romb[0] = OP_SPRRA;
     vm.romb[1] = 0; // rc
     vm.romb[2] = 1; // ra
     vm.romb[3] = 2; // width
@@ -531,7 +531,7 @@ int test_spra_clipping_right(void)
     }
 
     // Program: SPRA r0, r1, 5, 3
-    vm.romb[0] = OP_SPRA;
+    vm.romb[0] = OP_SPRRA;
     vm.romb[1] = 0; // rc
     vm.romb[2] = 1; // ra
     vm.romb[3] = 5; // width
@@ -573,7 +573,7 @@ int test_spra_clipping_bottom(void)
     }
 
     // Program: SPRA r0, r1, 3, 5
-    vm.romb[0] = OP_SPRA;
+    vm.romb[0] = OP_SPRRA;
     vm.romb[1] = 0; // rc
     vm.romb[2] = 1; // ra
     vm.romb[3] = 3; // width
@@ -617,7 +617,7 @@ int test_spra_large_sprite(void)
     }
 
     // Program: SPRA r0, r1, 16, 16
-    vm.romb[0] = OP_SPRA;
+    vm.romb[0] = OP_SPRRA;
     vm.romb[1] = 0;  // rc
     vm.romb[2] = 1;  // ra
     vm.romb[3] = 16; // width
