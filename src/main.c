@@ -220,6 +220,12 @@ int main(int argc, char* argv[])
                 printf("Gamepad connected: %s\n", SDL_GameControllerName(gamepad));
                 break;
             }
+            else
+            {
+                fprintf(stderr,
+                        "Warning: Failed to open game controller at index %d: %s\n",
+                        i, SDL_GetError());
+            }
         }
     }
 
@@ -352,6 +358,11 @@ int main(int argc, char* argv[])
                     if (gamepad)
                     {
                         printf("Gamepad connected: %s\n", SDL_GameControllerName(gamepad));
+                    }
+                    else
+                    {
+                        fprintf(stderr, "Failed to open game controller (index %d): %s\n",
+                                e.cdevice.which, SDL_GetError());
                     }
                 }
             }
