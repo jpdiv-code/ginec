@@ -37,18 +37,18 @@ test/test_%: test/test_%.c $(TEST_VM_OBJS)
 	$(CC) $(CFLAGS) $< $(TEST_VM_OBJS) -o $@
 
 test: $(TEST_BINS)
-	@echo "\n========================================="
-	@echo "Running all tests..."
-	@echo "=========================================\n"
+	@printf "\n========================================\n"
+	@printf "Running all tests..."
+	@printf "\n=========================================\n"
 	@failed=0; \
 	for test_bin in $(TEST_BINS); do \
 		./$$test_bin || failed=$$((failed + 1)); \
 	done; \
 	if [ $$failed -eq 0 ]; then \
-		echo "\n$(COLOR_GREEN)All test suites passed!$(COLOR_RESET)"; \
+		printf "\n$(COLOR_GREEN)All test suites passed!$(COLOR_RESET)\n"; \
 		exit 0; \
 	else \
-		echo "\n$(COLOR_RED)$$failed test suite(s) failed!$(COLOR_RESET)"; \
+		printf "\n$(COLOR_RED)$$failed test suite(s) failed!$(COLOR_RESET)\n"; \
 		exit 1; \
 	fi
 

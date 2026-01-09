@@ -130,8 +130,8 @@ int test_seed_rand(void)
     vm_execute_steps(&vm, 3);
 
     // Check that random values were generated (low bytes changed)
-    uint8_t rand1 = vm.reg[1] & 0xFF;
-    uint8_t rand2 = vm.reg[2] & 0xFF;
+    uint8_t rand1 = (uint8_t)(vm.reg[1] & 0xFF);
+    uint8_t rand2 = (uint8_t)(vm.reg[2] & 0xFF);
 
     ASSERT((vm.reg[1] & 0xFF00) == 0xFF00, "RAND should preserve high byte");
     ASSERT((vm.reg[2] & 0xFF00) == 0xFF00, "RAND should preserve high byte");

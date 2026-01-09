@@ -660,8 +660,8 @@ StepResult vm_step(VM* vm)
                 if (screen_x >= fb_width)
                     continue;
 
-                uint16_t fb_addr = fb_start + (screen_y * fb_width) + screen_x;
-                uint16_t sprite_offset = (row * width) + col;
+                uint16_t fb_addr = (uint16_t)(fb_start + (screen_y * fb_width) + screen_x);
+                uint16_t sprite_offset = (uint16_t)((row * width) + col);
                 uint16_t roma_addr = sprite_addr + sprite_offset;
 
                 uint8_t pixel = vm_roma_read8(vm, roma_addr);
