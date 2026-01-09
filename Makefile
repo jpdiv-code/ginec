@@ -65,6 +65,7 @@ $(BUILD_DIR_RELEASE)/%.o: src/%.c | $(BUILD_DIR_RELEASE)
 	$(CC) $(BASE_CFLAGS) -c $< -o $@
 
 # Compilation rules for debug build
+# Debug build includes -Ilib for Nuklear UI library headers
 $(BUILD_DIR_DEBUG)/%.o: src/%.c | $(BUILD_DIR_DEBUG)
 	$(CC) $(BASE_CFLAGS) -DDEBUG_MODE -g -Ilib -c $< -o $@
 
@@ -76,6 +77,7 @@ $(BUILD_DIR_TEST)/%.o: src/%.c | $(BUILD_DIR_TEST)
 build_release: $(RELEASE_OBJS)
 	$(CC) $(BASE_CFLAGS) $(RELEASE_OBJS) -o $(RELEASE_TARGET) $(LDFLAGS) $(SDL2_LDFLAGS)
 
+# Debug build requires pthread for VM threading
 build_debug: $(DEBUG_OBJS)
 	$(CC) $(BASE_CFLAGS) $(DEBUG_OBJS) -o $(DEBUG_TARGET) $(LDFLAGS) -lpthread $(SDL2_LDFLAGS)
 
