@@ -6,6 +6,10 @@
 
 #include "opcodes.h"
 
+// ==============================
+// CONSTANTS
+// ==============================
+
 #define FLAG_ZERO 0x01u     // Z 0b0000001
 #define FLAG_NEGATIVE 0x02u // N 0b0000010
 #define FLAG_CARRY 0x04u    // C 0b0000100
@@ -13,6 +17,10 @@
 
 #define MAX_BYTE_SHIFT 8
 #define MAX_WORD_SHIFT 16
+
+// ==============================
+// FLAG HELPERS
+// ==============================
 
 static inline void set_flags_NZ(VM* vm, uint32_t res, uint16_t byte_mask)
 {
@@ -100,6 +108,10 @@ static inline void set_flags_on_SUB(VM* vm, uint16_t a, uint16_t b, uint32_t res
     set_flags_NZ(vm, res, byte_mask);
 }
 
+// ==============================
+// VM STEP FUNCTION
+// ==============================
+
 StepResult vm_step(VM* vm)
 {
     uint8_t opcode = vm->romb[vm->ip++];
@@ -129,8 +141,8 @@ StepResult vm_step(VM* vm)
         uint16_t length = vm->reg[rl];
         for (uint32_t i = 0; i < length; i++)
         {
-            uint32_t write_addr = addr + i;
-            vm->ram[write_addr] = value;
+            uint16_t write_addr = (uint16_t)(addr + i);
+            vm_ram_write8(vm, write_addr, value);
         }
         break;
     }
@@ -145,13 +157,10 @@ StepResult vm_step(VM* vm)
         uint16_t addr = vm->reg[ra];
         uint16_t value = vm->reg[rp];
         uint16_t length = vm->reg[rl];
-        uint8_t low = (uint8_t)(value & 0x00FF);
-        uint8_t high = (uint8_t)((value >> 8) & 0x00FF);
         for (uint32_t i = 0; i < length; i++)
         {
-            uint32_t write_addr = addr + i * 2;
-            vm->ram[write_addr] = low;
-            vm->ram[write_addr + 1] = high;
+            uint16_t write_addr = (uint16_t)(addr + i * 2u);
+            vm_ram_write16(vm, write_addr, value);
         }
         break;
     }
@@ -251,7 +260,7 @@ StepResult vm_step(VM* vm)
     {
         uint8_t imm8 = vm->romb[vm->ip];
         vm->ip++;
-        vm->ram[vm->sp] = imm8;
+        vm_ram_write8(vm, vm->sp, imm8);
         vm->sp--;
         break;
     }
@@ -261,9 +270,9 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint8_t high = vm->romb[vm->ip];
         vm->ip++;
-        vm->ram[vm->sp] = high;
+        vm_ram_write8(vm, vm->sp, high);
         vm->sp--;
-        vm->ram[vm->sp] = low;
+        vm_ram_write8(vm, vm->sp, low);
         vm->sp--;
         break;
     }
@@ -272,7 +281,7 @@ StepResult vm_step(VM* vm)
         uint8_t rs = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint8_t val8 = (uint8_t)(vm->reg[rs] & 0x00FF);
-        vm->ram[vm->sp] = val8;
+        vm_ram_write8(vm, vm->sp, val8);
         vm->sp--;
         break;
     }
@@ -283,9 +292,9 @@ StepResult vm_step(VM* vm)
         uint16_t val16 = vm->reg[rs];
         uint8_t low = (uint8_t)(val16 & 0x00FF);
         uint8_t high = (uint8_t)((val16 >> 8) & 0x00FF);
-        vm->ram[vm->sp] = high;
+        vm_ram_write8(vm, vm->sp, high);
         vm->sp--;
-        vm->ram[vm->sp] = low;
+        vm_ram_write8(vm, vm->sp, low);
         vm->sp--;
         break;
     }
@@ -295,7 +304,7 @@ StepResult vm_step(VM* vm)
         uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         vm->sp++;
-        uint8_t val8 = vm->ram[vm->sp];
+        uint8_t val8 = vm_ram_read8(vm, vm->sp);
         vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
@@ -304,9 +313,9 @@ StepResult vm_step(VM* vm)
         uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         vm->sp++;
-        uint8_t low = vm->ram[vm->sp];
+        uint8_t low = vm_ram_read8(vm, vm->sp);
         vm->sp++;
-        uint8_t high = vm->ram[vm->sp];
+        uint8_t high = vm_ram_read8(vm, vm->sp);
         uint16_t val16 = 0x0000;
         val16 |= (uint16_t)low;
         val16 |= (uint16_t)(high << 8);
@@ -317,32 +326,32 @@ StepResult vm_step(VM* vm)
     case OP_SWP:
     {
         vm->sp++;
-        uint8_t val1 = vm->ram[vm->sp];
+        uint8_t val1 = vm_ram_read8(vm, vm->sp);
         vm->sp++;
-        uint8_t val2 = vm->ram[vm->sp];
-        vm->ram[vm->sp] = val1;
+        uint8_t val2 = vm_ram_read8(vm, vm->sp);
+        vm_ram_write8(vm, vm->sp, val1);
         vm->sp--;
-        vm->ram[vm->sp] = val2;
+        vm_ram_write8(vm, vm->sp, val2);
         vm->sp--;
         break;
     }
     case OP_SWPw:
     {
         vm->sp++;
-        uint8_t low1 = vm->ram[vm->sp];
+        uint8_t low1 = vm_ram_read8(vm, vm->sp);
         vm->sp++;
-        uint8_t high1 = vm->ram[vm->sp];
+        uint8_t high1 = vm_ram_read8(vm, vm->sp);
         vm->sp++;
-        uint8_t low2 = vm->ram[vm->sp];
+        uint8_t low2 = vm_ram_read8(vm, vm->sp);
         vm->sp++;
-        uint8_t high2 = vm->ram[vm->sp];
-        vm->ram[vm->sp] = high1;
+        uint8_t high2 = vm_ram_read8(vm, vm->sp);
+        vm_ram_write8(vm, vm->sp, high1);
         vm->sp--;
-        vm->ram[vm->sp] = low1;
+        vm_ram_write8(vm, vm->sp, low1);
         vm->sp--;
-        vm->ram[vm->sp] = high2;
+        vm_ram_write8(vm, vm->sp, high2);
         vm->sp--;
-        vm->ram[vm->sp] = low2;
+        vm_ram_write8(vm, vm->sp, low2);
         vm->sp--;
         break;
     }
@@ -350,23 +359,23 @@ StepResult vm_step(VM* vm)
     case OP_DUP:
     {
         vm->sp++;
-        uint8_t val = vm->ram[vm->sp];
+        uint8_t val = vm_ram_read8(vm, vm->sp);
         vm->sp--;
-        vm->ram[vm->sp] = val;
+        vm_ram_write8(vm, vm->sp, val);
         vm->sp--;
         break;
     }
     case OP_DUPw:
     {
         vm->sp++;
-        uint8_t low = vm->ram[vm->sp];
+        uint8_t low = vm_ram_read8(vm, vm->sp);
         vm->sp++;
-        uint8_t high = vm->ram[vm->sp];
+        uint8_t high = vm_ram_read8(vm, vm->sp);
         vm->sp--;
         vm->sp--;
-        vm->ram[vm->sp] = high;
+        vm_ram_write8(vm, vm->sp, high);
         vm->sp--;
-        vm->ram[vm->sp] = low;
+        vm_ram_write8(vm, vm->sp, low);
         vm->sp--;
         break;
     }
@@ -394,7 +403,7 @@ StepResult vm_step(VM* vm)
         uint16_t addr = 0x0000;
         addr |= (uint16_t)low;
         addr |= (uint16_t)(high << 8);
-        uint8_t val8 = vm->ram[addr];
+        uint8_t val8 = vm_ram_read8(vm, addr);
         vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
@@ -409,11 +418,7 @@ StepResult vm_step(VM* vm)
         uint16_t addr = 0x0000;
         addr |= (uint16_t)low;
         addr |= (uint16_t)(high << 8);
-        uint8_t low_val = vm->ram[addr];
-        uint8_t high_val = vm->ram[addr + 1];
-        uint16_t val16 = 0x0000;
-        val16 |= (uint16_t)low_val;
-        val16 |= (uint16_t)(high_val << 8);
+        uint16_t val16 = vm_ram_read16(vm, addr);
         vm->reg[rd] = val16;
         break;
     }
@@ -429,7 +434,7 @@ StepResult vm_step(VM* vm)
         addr |= (uint16_t)low;
         addr |= (uint16_t)(high << 8);
         uint8_t val8 = (uint8_t)(vm->reg[rs] & 0x00FF);
-        vm->ram[addr] = val8;
+        vm_ram_write8(vm, addr, val8);
         break;
     }
     case OP_STw:
@@ -444,10 +449,7 @@ StepResult vm_step(VM* vm)
         addr |= (uint16_t)low;
         addr |= (uint16_t)(high << 8);
         uint16_t val16 = vm->reg[rs];
-        uint8_t low_val = (uint8_t)(val16 & 0x00FF);
-        uint8_t high_val = (uint8_t)((val16 >> 8) & 0x00FF);
-        vm->ram[addr] = low_val;
-        vm->ram[addr + 1] = high_val;
+        vm_ram_write16(vm, addr, val16);
         break;
     }
 
@@ -458,7 +460,7 @@ StepResult vm_step(VM* vm)
         uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint16_t addr = vm->reg[ra];
-        uint8_t val8 = vm->ram[addr];
+        uint8_t val8 = vm_ram_read8(vm, addr);
         vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
@@ -469,11 +471,7 @@ StepResult vm_step(VM* vm)
         uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint16_t addr = vm->reg[ra];
-        uint8_t low_val = vm->ram[addr];
-        uint8_t high_val = vm->ram[addr + 1];
-        uint16_t val16 = 0x0000;
-        val16 |= (uint16_t)low_val;
-        val16 |= (uint16_t)(high_val << 8);
+        uint16_t val16 = vm_ram_read16(vm, addr);
         vm->reg[rd] = val16;
         break;
     }
@@ -485,7 +483,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint16_t addr = vm->reg[ra];
         uint8_t val8 = (uint8_t)(vm->reg[rs] & 0x00FF);
-        vm->ram[addr] = val8;
+        vm_ram_write8(vm, addr, val8);
         break;
     }
     case OP_STRw:
@@ -496,10 +494,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint16_t addr = vm->reg[ra];
         uint16_t val16 = vm->reg[rs];
-        uint8_t low_val = (uint8_t)(val16 & 0x00FF);
-        uint8_t high_val = (uint8_t)((val16 >> 8) & 0x00FF);
-        vm->ram[addr] = low_val;
-        vm->ram[addr + 1] = high_val;
+        vm_ram_write16(vm, addr, val16);
         break;
     }
 
@@ -512,7 +507,7 @@ StepResult vm_step(VM* vm)
         int8_t off8 = (int8_t)vm->romb[vm->ip];
         vm->ip++;
         uint16_t addr = (uint16_t)(vm->reg[ra] + off8);
-        uint8_t val8 = vm->ram[addr];
+        uint8_t val8 = vm_ram_read8(vm, addr);
         vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
@@ -525,11 +520,7 @@ StepResult vm_step(VM* vm)
         int8_t off8 = (int8_t)vm->romb[vm->ip];
         vm->ip++;
         uint16_t addr = (uint16_t)(vm->reg[ra] + off8);
-        uint8_t low_val = vm->ram[addr];
-        uint8_t high_val = vm->ram[addr + 1];
-        uint16_t val16 = 0x0000;
-        val16 |= (uint16_t)low_val;
-        val16 |= (uint16_t)(high_val << 8);
+        uint16_t val16 = vm_ram_read16(vm, addr);
         vm->reg[rd] = val16;
         break;
     }
@@ -543,7 +534,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint16_t addr = (uint16_t)(vm->reg[ra] + off8);
         uint8_t val8 = (uint8_t)(vm->reg[rs] & 0x00FF);
-        vm->ram[addr] = val8;
+        vm_ram_write8(vm, addr, val8);
         break;
     }
     case OP_STRIw:
@@ -556,10 +547,7 @@ StepResult vm_step(VM* vm)
         vm->ip++;
         uint16_t addr = (uint16_t)(vm->reg[ra] + off8);
         uint16_t val16 = vm->reg[rs];
-        uint8_t low_val = (uint8_t)(val16 & 0x00FF);
-        uint8_t high_val = (uint8_t)((val16 >> 8) & 0x00FF);
-        vm->ram[addr] = low_val;
-        vm->ram[addr + 1] = high_val;
+        vm_ram_write16(vm, addr, val16);
         break;
     }
 
@@ -578,7 +566,7 @@ StepResult vm_step(VM* vm)
         uint16_t addr = 0x0000;
         addr |= (uint16_t)low;
         addr |= (uint16_t)(high << 8);
-        uint8_t val8 = vm->roma[addr];
+        uint8_t val8 = vm_roma_read8(vm, addr);
         vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
@@ -593,11 +581,7 @@ StepResult vm_step(VM* vm)
         uint16_t addr = 0x0000;
         addr |= (uint16_t)low;
         addr |= (uint16_t)(high << 8);
-        uint8_t low_val = vm->roma[addr];
-        uint8_t high_val = vm->roma[addr + 1];
-        uint16_t val16 = 0x0000;
-        val16 |= (uint16_t)low_val;
-        val16 |= (uint16_t)(high_val << 8);
+        uint16_t val16 = vm_roma_read16(vm, addr);
         vm->reg[rd] = val16;
         break;
     }
@@ -609,7 +593,7 @@ StepResult vm_step(VM* vm)
         uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint16_t addr = vm->reg[ra];
-        uint8_t val8 = vm->roma[addr];
+        uint8_t val8 = vm_roma_read8(vm, addr);
         vm->reg[rd] = (vm->reg[rd] & 0xFF00) | (val8 & 0x00FF);
         break;
     }
@@ -620,11 +604,7 @@ StepResult vm_step(VM* vm)
         uint8_t ra = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         uint16_t addr = vm->reg[ra];
-        uint8_t low_val = vm->roma[addr];
-        uint8_t high_val = vm->roma[addr + 1];
-        uint16_t val16 = 0x0000;
-        val16 |= (uint16_t)low_val;
-        val16 |= (uint16_t)(high_val << 8);
+        uint16_t val16 = vm_roma_read16(vm, addr);
         vm->reg[rd] = val16;
         break;
     }
@@ -643,7 +623,8 @@ StepResult vm_step(VM* vm)
 
         for (uint16_t i = 0; i < count; i++)
         {
-            vm->ram[ram_addr + i] = vm->roma[roma_addr + i];
+            uint8_t byte = vm_roma_read8(vm, roma_addr + i);
+            vm_ram_write8(vm, ram_addr + i, byte);
         }
         break;
     }
@@ -683,7 +664,8 @@ StepResult vm_step(VM* vm)
                 uint16_t sprite_offset = (row * width) + col;
                 uint16_t roma_addr = sprite_addr + sprite_offset;
 
-                vm->ram[fb_addr] = vm->roma[roma_addr];
+                uint8_t pixel = vm_roma_read8(vm, roma_addr);
+                vm_ram_write8(vm, fb_addr, pixel);
             }
         }
         break;
@@ -1414,9 +1396,9 @@ StepResult vm_step(VM* vm)
         uint16_t value = vm->reg[rs];
         uint8_t low = (uint8_t)(value & 0x00FF);
         uint8_t high = (uint8_t)((value >> 8) & 0x00FF);
-        vm->ram[vm->csp] = high;
+        vm_ram_write8(vm, vm->csp, high);
         vm->csp--;
-        vm->ram[vm->csp] = low;
+        vm_ram_write8(vm, vm->csp, low);
         vm->csp--;
         break;
     }
@@ -1425,9 +1407,9 @@ StepResult vm_step(VM* vm)
         uint8_t rd = vm->romb[vm->ip] % REG_COUNT;
         vm->ip++;
         vm->csp++;
-        uint8_t low = vm->ram[vm->csp];
+        uint8_t low = vm_ram_read8(vm, vm->csp);
         vm->csp++;
-        uint8_t high = vm->ram[vm->csp];
+        uint8_t high = vm_ram_read8(vm, vm->csp);
         uint16_t value = (uint16_t)(low | (high << 8));
         vm->reg[rd] = value;
         break;
@@ -1456,9 +1438,9 @@ StepResult vm_step(VM* vm)
         uint16_t ret_addr = vm->ip;
         uint8_t ret_low = (uint8_t)(ret_addr & 0x00FF);
         uint8_t ret_high = (uint8_t)((ret_addr >> 8) & 0x00FF);
-        vm->ram[vm->csp] = ret_high;
+        vm_ram_write8(vm, vm->csp, ret_high);
         vm->csp--;
-        vm->ram[vm->csp] = ret_low;
+        vm_ram_write8(vm, vm->csp, ret_low);
         vm->csp--;
         vm->ip = addr;
         break;
@@ -1471,9 +1453,9 @@ StepResult vm_step(VM* vm)
         uint16_t ret_addr = vm->ip;
         uint8_t ret_low = (uint8_t)(ret_addr & 0x00FF);
         uint8_t ret_high = (uint8_t)((ret_addr >> 8) & 0x00FF);
-        vm->ram[vm->csp] = ret_high;
+        vm_ram_write8(vm, vm->csp, ret_high);
         vm->csp--;
-        vm->ram[vm->csp] = ret_low;
+        vm_ram_write8(vm, vm->csp, ret_low);
         vm->csp--;
         vm->ip = addr;
         break;
@@ -1481,9 +1463,9 @@ StepResult vm_step(VM* vm)
     case OP_RET:
     {
         vm->csp++;
-        uint8_t ret_low = vm->ram[vm->csp];
+        uint8_t ret_low = vm_ram_read8(vm, vm->csp);
         vm->csp++;
-        uint8_t ret_high = vm->ram[vm->csp];
+        uint8_t ret_high = vm_ram_read8(vm, vm->csp);
         uint16_t ret_addr = 0x0000;
         ret_addr |= (uint16_t)ret_low;
         ret_addr |= (uint16_t)(ret_high << 8);

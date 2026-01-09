@@ -77,6 +77,36 @@ typedef enum
 } StepResult;
 
 // ==============================
+// MEMORY ACCESS HELPERS
+// ==============================
+
+static inline uint8_t vm_ram_read8(VM* vm, uint16_t addr) { return vm->ram[addr]; }
+
+static inline uint16_t vm_ram_read16(VM* vm, uint16_t addr)
+{
+    uint8_t low = vm->ram[addr];
+    uint8_t high = vm->ram[addr + 1];
+    return (uint16_t)((uint16_t)low | ((uint16_t)high << 8));
+}
+
+static inline void vm_ram_write8(VM* vm, uint16_t addr, uint8_t val) { vm->ram[addr] = val; }
+
+static inline void vm_ram_write16(VM* vm, uint16_t addr, uint16_t val)
+{
+    vm->ram[addr] = (uint8_t)(val & 0xFF);
+    vm->ram[addr + 1] = (uint8_t)((val >> 8) & 0xFF);
+}
+
+static inline uint8_t vm_roma_read8(VM* vm, uint16_t addr) { return vm->roma[addr]; }
+
+static inline uint16_t vm_roma_read16(VM* vm, uint16_t addr)
+{
+    uint8_t low = vm->roma[addr];
+    uint8_t high = vm->roma[addr + 1];
+    return (uint16_t)((uint16_t)low | ((uint16_t)high << 8));
+}
+
+// ==============================
 // VM FUNCTIONS
 // ==============================
 

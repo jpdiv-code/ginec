@@ -88,37 +88,29 @@ static void update_input_mmio(VM* vm)
 {
     uint16_t current_input = read_input_state();
 
-    uint16_t previous_input =
-        (uint16_t)(vm->ram[MIMO_INPUT_DOWN] | (vm->ram[MIMO_INPUT_DOWN + 1] << 8));
+    uint16_t previous_input = vm_ram_read16(vm, MIMO_INPUT_DOWN);
 
     uint16_t pressed = current_input & ~previous_input;
     uint16_t released = previous_input & ~current_input;
 
-    uint16_t existing_pressed =
-        (uint16_t)(vm->ram[MIMO_INPUT_PRESSED] | (vm->ram[MIMO_INPUT_PRESSED + 1] << 8));
-    uint16_t existing_released =
-        (uint16_t)(vm->ram[MIMO_INPUT_RELEASED] | (vm->ram[MIMO_INPUT_RELEASED + 1] << 8));
+    uint16_t existing_pressed = vm_ram_read16(vm, MIMO_INPUT_PRESSED);
+    uint16_t existing_released = vm_ram_read16(vm, MIMO_INPUT_RELEASED);
 
     existing_pressed |= pressed;
     existing_released |= released;
 
-    vm->ram[MIMO_INPUT_DOWN] = (uint8_t)(current_input & 0xFF);
-    vm->ram[MIMO_INPUT_DOWN + 1] = (uint8_t)((current_input >> 8) & 0xFF);
+    vm_ram_write16(vm, MIMO_INPUT_DOWN, current_input);
 
-    vm->ram[MIMO_INPUT_PRESSED] = (uint8_t)(existing_pressed & 0xFF);
-    vm->ram[MIMO_INPUT_PRESSED + 1] = (uint8_t)((existing_pressed >> 8) & 0xFF);
+    vm_ram_write16(vm, MIMO_INPUT_PRESSED, existing_pressed);
 
-    vm->ram[MIMO_INPUT_RELEASED] = (uint8_t)(existing_released & 0xFF);
-    vm->ram[MIMO_INPUT_RELEASED + 1] = (uint8_t)((existing_released >> 8) & 0xFF);
+    vm_ram_write16(vm, MIMO_INPUT_RELEASED, existing_released);
 }
 
 static void clear_input_latches(VM* vm)
 {
-    vm->ram[MIMO_INPUT_PRESSED] = 0;
-    vm->ram[MIMO_INPUT_PRESSED + 1] = 0;
+    vm_ram_write16(vm, MIMO_INPUT_PRESSED, 0);
 
-    vm->ram[MIMO_INPUT_RELEASED] = 0;
-    vm->ram[MIMO_INPUT_RELEASED + 1] = 0;
+    vm_ram_write16(vm, MIMO_INPUT_RELEASED, 0);
 }
 
 // ==============================
@@ -149,7 +141,7 @@ void draw_sprite(VM* vm, int sprite_start_x, int sprite_start_y, int sprite_id, 
 
             int fb_index = RAM_FB_BASE + pixel_to_paint_y * FB_W + pixel_to_paint_x;
 
-            vm->ram[fb_index] = pixel; // pixel = palette index
+            vm_ram_write8(vm, (uint16_t)fb_index, pixel); // pixel = palette index
         }
     }
 }
@@ -328,7 +320,7 @@ int main(int argc, char* argv[])
 
         for (int i = 0; i < FB_SIZE; i++)
         {
-            uint8_t color_id = vm.ram[RAM_FB_BASE + i];
+            uint8_t color_id = vm_ram_read8(&vm, (uint16_t)(RAM_FB_BASE + i));
 
             Color col = palette[color_id];
             scratch_rgba[i] =
