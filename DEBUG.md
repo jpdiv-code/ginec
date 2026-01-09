@@ -14,7 +14,7 @@ make debug
 
 ## Architecture
 
-GINEC использует модульную host-layer архитектуру:
+GINEC uses a modular host-layer architecture:
 
 ```
 ┌──────────────────────────────────────────────┐
