@@ -9,30 +9,36 @@ LDFLAGS =
 SDL2_CFLAGS  := $(shell sdl2-config --cflags)
 SDL2_LDFLAGS := $(shell sdl2-config --libs)
 
-CFLAGS = $(STANDARD_FLAGS) $(OPTIMIZATION_FLAGS) $(WARNING_FLAGS) $(INCLUDE_FLAGS) $(SDL2_CFLAGS)
+BASE_CFLAGS = $(STANDARD_FLAGS) $(OPTIMIZATION_FLAGS) $(WARNING_FLAGS) $(INCLUDE_FLAGS) $(SDL2_CFLAGS)
 
+# Build directories for different configurations
+BUILD_DIR_RELEASE = build/release
+BUILD_DIR_DEBUG   = build/debug
+BUILD_DIR_TEST    = build/test
+
+# Source files for different builds
 RELEASE_SRCS = src/main.c src/vm.c src/host_common.c src/host_normal.c
-RELEASE_OBJS = $(RELEASE_SRCS:.c=.o)
+RELEASE_OBJS = $(patsubst src/%.c,$(BUILD_DIR_RELEASE)/%.o,$(RELEASE_SRCS))
 RELEASE_TARGET = ginec
 
 DEBUG_SRCS = src/main.c src/vm.c src/host_common.c src/host_debug.c
-DEBUG_OBJS = $(DEBUG_SRCS:.c=.o)
+DEBUG_OBJS = $(patsubst src/%.c,$(BUILD_DIR_DEBUG)/%.o,$(DEBUG_SRCS))
 DEBUG_TARGET = ginec_debug
 
 TEST_VM_SRCS = src/vm.c
-TEST_VM_OBJS = $(TEST_VM_SRCS:.c=.o)
+TEST_VM_OBJS = $(patsubst src/%.c,$(BUILD_DIR_TEST)/%.o,$(TEST_VM_SRCS))
 TEST_SRCS = $(wildcard test/test_*.c)
 TEST_BINS = $(TEST_SRCS:.c=)
 
 .PHONY: all fmt test clean_release clean_debug clean_examples clean_test clean build_release build_debug run_release run_debug example/% hooks
 
-all: build_debug run_debug
+all: build_release build_debug
 
 fmt:
 	clang-format -i $(RELEASE_SRCS) $(DEBUG_SRCS) $(wildcard include/*.h)
 
 test/test_%: test/test_%.c $(TEST_VM_OBJS)
-	$(CC) $(CFLAGS) $< $(TEST_VM_OBJS) -o $@
+	$(CC) $(BASE_CFLAGS) $< $(TEST_VM_OBJS) -o $@
 
 test: $(TEST_BINS)
 	@printf "\n========================================\n"
@@ -50,27 +56,44 @@ test: $(TEST_BINS)
 		exit 1; \
 	fi
 
+# Create build directories (order-only prerequisites)
+$(BUILD_DIR_RELEASE) $(BUILD_DIR_DEBUG) $(BUILD_DIR_TEST):
+	mkdir -p $@
+
+# Compilation rules for release build
+$(BUILD_DIR_RELEASE)/%.o: src/%.c | $(BUILD_DIR_RELEASE)
+	$(CC) $(BASE_CFLAGS) -c $< -o $@
+
+# Compilation rules for debug build
+$(BUILD_DIR_DEBUG)/%.o: src/%.c | $(BUILD_DIR_DEBUG)
+	$(CC) $(BASE_CFLAGS) -DDEBUG_MODE -g -Ilib -c $< -o $@
+
+# Compilation rules for test build
+$(BUILD_DIR_TEST)/%.o: src/%.c | $(BUILD_DIR_TEST)
+	$(CC) $(BASE_CFLAGS) -c $< -o $@
+
+# Build targets
+build_release: $(RELEASE_OBJS)
+	$(CC) $(BASE_CFLAGS) $(RELEASE_OBJS) -o $(RELEASE_TARGET) $(LDFLAGS) $(SDL2_LDFLAGS)
+
+build_debug: $(DEBUG_OBJS)
+	$(CC) $(BASE_CFLAGS) -DDEBUG_MODE -g -Ilib $(DEBUG_OBJS) -o $(DEBUG_TARGET) $(LDFLAGS) -lpthread $(SDL2_LDFLAGS)
+
+# Clean targets
 clean_release:
-	rm -f $(RELEASE_OBJS) $(RELEASE_TARGET)
+	rm -rf $(BUILD_DIR_RELEASE) $(RELEASE_TARGET)
 
 clean_debug:
-	rm -f $(DEBUG_OBJS) $(DEBUG_TARGET)
+	rm -rf $(BUILD_DIR_DEBUG) $(DEBUG_TARGET)
 
 clean_examples:
 	rm -f game.roma game.romb
 
 clean_test:
-	rm -f $(TEST_VM_OBJS) $(TEST_BINS)
+	rm -rf $(BUILD_DIR_TEST) $(TEST_BINS)
 
 clean: clean_release clean_debug clean_examples clean_test
-
-build_release: clean_release $(RELEASE_OBJS)
-	$(CC) $(CFLAGS) $(RELEASE_OBJS) -o $(RELEASE_TARGET) $(LDFLAGS) $(SDL2_LDFLAGS)
-
-build_debug: CFLAGS += -DDEBUG_MODE -g -Ilib
-build_debug: LDFLAGS += -lpthread
-build_debug: clean_debug $(DEBUG_OBJS)
-	$(CC) $(CFLAGS) $(DEBUG_OBJS) -o $(DEBUG_TARGET) $(LDFLAGS) $(SDL2_LDFLAGS)
+	rm -rf build
 
 run_release: build_release
 	./$(RELEASE_TARGET)
