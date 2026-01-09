@@ -24,7 +24,7 @@ TEST_VM_OBJS = $(TEST_VM_SRCS:.c=.o)
 TEST_SRCS = $(wildcard test/test_*.c)
 TEST_BINS = $(TEST_SRCS:.c=)
 
-.PHONY: all fmt test clean_release clean_debug clean_examples clean build_release build_debug run_release run_debug example/% hooks
+.PHONY: all fmt test clean_release clean_debug clean_examples clean_test clean build_release build_debug run_release run_debug example/% hooks
 
 all: build_debug run_debug
 
@@ -59,7 +59,10 @@ clean_debug:
 clean_examples:
 	rm -f game.roma game.romb
 
-clean: clean_release clean_debug clean_examples
+clean_test:
+	rm -f $(TEST_VM_OBJS) $(TEST_BINS)
+
+clean: clean_release clean_debug clean_examples clean_test
 
 build_release: clean_release $(RELEASE_OBJS)
 	$(CC) $(CFLAGS) $(RELEASE_OBJS) -o $(RELEASE_TARGET) $(LDFLAGS) $(SDL2_LDFLAGS)
