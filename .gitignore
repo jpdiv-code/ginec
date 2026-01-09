@@ -5,6 +5,9 @@ compile_commands.json
 *.roma
 *.romb
 
+# Build directories
+build/
+
 # Prerequisites
 *.d
 

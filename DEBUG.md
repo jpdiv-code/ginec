@@ -4,12 +4,12 @@
 
 ```bash
 # Normal mode - single window
-make
+make build_release
 ./ginec
 
 # Debug mode - dual windows + debugger
-make debug
-./ginec
+make build_debug
+./ginec_debug
 ```
 
 ## Architecture
