@@ -276,6 +276,21 @@ class AssemblerError(Exception):
         return f"error: {self.message}"
 
 
+@dataclass
+class AssemblerWarning:
+    """Assembly warning"""
+    message: str
+    line: int
+    filename: str
+
+    def format_warning(self):
+        if self.filename and self.line:
+            return f"\033[93m{self.filename}:{self.line}: warning: {self.message}\033[0m"
+        elif self.line:
+            return f"\033[93mline {self.line}: warning: {self.message}\033[0m"
+        return f"\033[93mwarning: {self.message}\033[0m"
+
+
 class Assembler:
     def __init__(self):
         self.labels: Dict[str, int] = {}
@@ -288,10 +303,17 @@ class Assembler:
         self.instructions: List[Instruction | DataDirective] = []
         self.current_file = ""
         self.macro_counter = 0
+        self.warnings: List[AssemblerWarning] = []
+        self.undefined_symbols: set = set()  # Track undefined symbols per pass
 
     def error(self, message: str, line: int = 0):
         """Raises an assembly error"""
         raise AssemblerError(message, line, self.current_file)
+
+    def warning(self, message: str, line: int = 0):
+        """Records an assembly warning"""
+        warn = AssemblerWarning(message, line, self.current_file)
+        self.warnings.append(warn)
 
     def parse_number(self, s: str, line: int = 0) -> int:
         """Parse numeric literal"""
@@ -333,6 +355,18 @@ class Assembler:
     def evaluate_expression(self, expr: str, line: int = 0) -> int:
         """Evaluate expression with constants and labels"""
         expr = expr.strip()
+        original_expr = expr
+
+        # Find all identifiers in the expression
+        identifiers = re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', expr)
+        
+        # Check for undefined symbols
+        for identifier in identifiers:
+            if identifier not in self.constants and identifier not in self.labels:
+                symbol_key = f"{identifier}:{line}"
+                if symbol_key not in self.undefined_symbols:
+                    self.undefined_symbols.add(symbol_key)
+                    self.warning(f"undefined symbol '{identifier}' (evaluates to 0)", line)
 
         # Replace constants
         for name, value in self.constants.items():
@@ -347,7 +381,7 @@ class Assembler:
             result = self._eval_simple_expression(expr)
             return result
         except Exception as e:
-            self.error(f"Cannot evaluate expression '{expr}': {str(e)}", line)
+            self.error(f"Cannot evaluate expression '{original_expr}': {str(e)}", line)
             return 0
 
     def _eval_simple_expression(self, expr: str) -> int:
@@ -1089,6 +1123,13 @@ class Assembler:
             print(f"Writing {output_romb}...")
             with open(output_romb, "wb") as f:
                 f.write(self.sections["romb"][: self.section_sizes["romb"]])
+
+            # Print warnings
+            if self.warnings:
+                print(f"\n{len(self.warnings)} warning(s):")
+                for warn in self.warnings:
+                    print(warn.format_warning())
+                print()
 
             print(f"Assembly successful!")
             print(f"  ROMA size: {self.section_sizes['roma']} bytes")
