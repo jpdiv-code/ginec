@@ -4,6 +4,38 @@ ginec - is non-existing console
 
 ## Building and Running
 
+### Normal Mode (Single Window)
+
+Build and run the VM in normal mode:
+
+```bash
+make
+./ginec
+```
+
+Or use the convenience target:
+
+```bash
+make run
+```
+
+### Debug Mode (Dual Windows with Debugger)
+
+Build with debug mode enabled:
+
+```bash
+make debug
+./ginec
+```
+
+This opens **two windows**:
+- **Main Window** - VM execution and game display
+- **Debugger Window** - UI controls and VM state inspection
+
+The debugger runs in a separate thread, so it remains responsive even if the VM hangs.
+
+See [DEBUG.md](DEBUG.md) for detailed documentation.
+
 ### Assembling Programs
 
 To assemble a program:

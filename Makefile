@@ -14,8 +14,12 @@ SDL2_LDFLAGS := $(shell sdl2-config --libs)
 
 CFLAGS = $(STANDARD_FLAGS) $(OPTIMIZATION_FLAGS) $(WARNING_FLAGS) $(INCLUDE_FLAGS) $(SDL2_CFLAGS)
 
-SRCS = $(wildcard src/*.c)
+SRCS = src/main.c src/vm.c src/host_common.c src/host_normal.c
 OBJS = $(SRCS:.c=.o)
+
+DEBUG_SRCS = src/main.c src/vm.c src/host_common.c src/host_debug.c
+DEBUG_OBJS = $(DEBUG_SRCS:.c=.o)
+
 TARGET = ginec
 
 TEST_VM_SRCS = src/vm.c
@@ -23,12 +27,17 @@ TEST_VM_OBJS = $(TEST_VM_SRCS:.c=.o)
 TEST_SRCS = $(wildcard test/test_*.c)
 TEST_BINS = $(TEST_SRCS:.c=)
 
-.PHONY: all clean run test
+.PHONY: all clean run test debug clean-debug
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LDFLAGS) $(SDL2_LDFLAGS)
+
+debug: CFLAGS += -DDEBUG_MODE -g -Ilib
+debug: LDFLAGS += -lpthread
+debug: clean-debug $(DEBUG_OBJS)
+	$(CC) $(CFLAGS) $(DEBUG_OBJS) -o $(TARGET) $(LDFLAGS) $(SDL2_LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -56,6 +65,10 @@ clean:
 	rm -f $(OBJS) $(TARGET)
 	rm -f $(TEST_VM_OBJS) $(TEST_BINS)
 	rm -f game.roma game.romb
+	rm -f src/host_common.o src/host_normal.o src/host_debug.o
+
+clean-debug:
+	rm -f src/main.o src/vm.o src/host_common.o src/host_debug.o
 
 run: $(TARGET)
 	./$(TARGET)
