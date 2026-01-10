@@ -78,16 +78,29 @@ static void* vm_thread_main(void* arg)
                 }
             }
 
+            /* Copy framebuffer data from VM RAM while holding vm_mutex */
+            uint8_t local_fb[FB_SIZE];
+            for (int i = 0; i < FB_SIZE; i++)
+            {
+                local_fb[i] = vm_ram_read8(ctx->vm, (uint16_t)(RAM_FB_BASE + i));
+            }
+
+            /* Done accessing VM; release vm_mutex before taking fb_mutex */
+            pthread_mutex_unlock(&ctx->vm_mutex);
+
+            /* Update shared framebuffer under fb_mutex only */
             pthread_mutex_lock(&ctx->fb_mutex);
             for (int i = 0; i < FB_SIZE; i++)
             {
-                ctx->framebuffer[i] = vm_ram_read8(ctx->vm, (uint16_t)(RAM_FB_BASE + i));
+                ctx->framebuffer[i] = local_fb[i];
             }
             pthread_mutex_unlock(&ctx->fb_mutex);
         }
-
-        pthread_mutex_unlock(&ctx->vm_mutex);
-
+        else
+        {
+            /* No VM step/framebuffer update; just release vm_mutex */
+            pthread_mutex_unlock(&ctx->vm_mutex);
+        }
         host_sleep_until(next_frame_time);
         next_frame_time += VM_FRAME_DT;
 
@@ -188,13 +201,17 @@ static void debugger_ui_run(VMDebugContext* ctx)
             }
             if (evt.type == SDL_QUIT)
             {
+                pthread_mutex_lock(&ctx->vm_mutex);
                 ctx->debugger_running = false;
                 ctx->vm_thread_running = false;
+                pthread_mutex_unlock(&ctx->vm_mutex);
             }
             if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
             {
+                pthread_mutex_lock(&ctx->vm_mutex);
                 ctx->debugger_running = false;
                 ctx->vm_thread_running = false;
+                pthread_mutex_unlock(&ctx->vm_mutex);
             }
             nk_sdl_handle_event(&evt);
         }
