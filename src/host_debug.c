@@ -196,8 +196,10 @@ static void debugger_ui_run(VMDebugContext* ctx)
         {
             if (evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE)
             {
+                pthread_mutex_lock(&ctx->vm_mutex);
                 ctx->debugger_running = false;
                 ctx->vm_thread_running = false;
+                pthread_mutex_unlock(&ctx->vm_mutex);
             }
             if (evt.type == SDL_QUIT)
             {
