@@ -271,7 +271,7 @@ typedef struct
 #define VGA_MERCURY {228, 228, 228}
 #define VGA_BRIGHT_GRAY {238, 238, 238}
 
-Color palette[256] = {
+static const Color palette[256] = {
     VGA_SYSTEM_BLACK,                //   0
     VGA_SYSTEM_MAROON,               //   1
     VGA_SYSTEM_OFFICE_GREEN,         //   2

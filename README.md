@@ -4,6 +4,58 @@ ginec - is non-existing console
 
 ## Building and Running
 
+### Normal Mode (Single Window)
+
+Build and run the VM in normal mode:
+
+```bash
+make build_release
+./ginec
+```
+
+Or use the convenience target:
+
+```bash
+make run_release
+```
+
+### Debug Mode (Dual Windows with Debugger)
+
+Build with debug mode enabled:
+
+```bash
+make build_debug
+./ginec_debug
+```
+
+Or use the convenience target:
+
+```bash
+make run_debug
+```
+
+This opens **two windows**:
+- **Main Window** - VM execution and game display
+- **Debugger Window** - UI controls and VM state inspection
+
+The debugger runs in a separate thread, so it remains responsive even if the VM hangs.
+
+See [DEBUG.md](DEBUG.md) for detailed documentation.
+
+### Building Both Versions
+
+To build both release and debug versions without running:
+
+```bash
+make all
+```
+
+or simply:
+
+```bash
+make
+```
+
 ### Assembling Programs
 
 To assemble a program:
@@ -26,7 +78,9 @@ This creates `game.roma` and `game.romb` files.
 The VM loads `game.roma` and `game.romb` from the current working directory:
 
 ```bash
-make run
+make run_release   # Run normal mode
+# or
+make run_debug     # Run debug mode
 ```
 
 ## Technical Architecture
