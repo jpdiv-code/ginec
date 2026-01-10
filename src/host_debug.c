@@ -23,7 +23,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 #include "../lib/nuklear.h"
@@ -144,8 +144,7 @@ static void debugger_ui_run(VMDebugContext* ctx)
         return;
     }
 
-    SDL_Window* dbg_win = SDL_CreateWindow("GINEC Debugger", 800, 100, 800, 600,
-                                           SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    SDL_Window* dbg_win = SDL_CreateWindow("GINEC Debugger", 800, 100, 800, 600, SDL_WINDOW_SHOWN);
     if (!dbg_win)
     {
         fprintf(stderr, "Debugger: SDL_CreateWindow (Debugger) failed: %s\n", SDL_GetError());
@@ -182,6 +181,11 @@ static void debugger_ui_run(VMDebugContext* ctx)
         nk_input_begin(nk_ctx);
         while (SDL_PollEvent(&evt))
         {
+            if (evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE)
+            {
+                ctx->debugger_running = false;
+                ctx->vm_thread_running = false;
+            }
             if (evt.type == SDL_QUIT)
             {
                 ctx->debugger_running = false;
