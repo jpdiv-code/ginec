@@ -1,52 +1,72 @@
-CC=gcc
+CC = gcc
 
-RM=rm -rf
-INSTALL=install
-MKDIR=mkdir -p
+STANDARD_FLAGS = -std=c99
+OPTIMIZATION_FLAGS = -O3 -ffast-math -funroll-loops -fstrict-aliasing -falign-functions
+WARNING_FLAGS = -Wall -Wextra -Wpedantic -Werror -Wconversion -Wshadow
 
-CVER=-std=c99
-COPT=-O2
-CMES=-Wall -Wextra -Wpedantic -Wshadow
+INCLUDE_FLAGS = -Iinclude
+LDFLAGS =
 
-CFLAGS=$(CVER) $(COPT) $(CMES)
-DEBUGCFLAGS=-ggdb $(CVER) $(CMES)
-TESTCFLAGS=-ggdb -D TEST -Itest $(CVER) $(CMES)
+UNAME_S := $(shell uname -s)
 
-SRCDIR=./src
-TESTRCDIR=./test
-BINDIR=./bin
-BINNAME=ginec
-BINPATH=$(BINDIR)/$(BINNAME)
-DEBUGBINPATH=$(BINPATH)-debug
-TESTBINPATH=$(BINPATH)-test
-INSTALLPATH=/usr/local/bin
+SDL2_CFLAGS  := $(shell sdl2-config --cflags)
+SDL2_LDFLAGS := $(shell sdl2-config --libs)
 
-SOURCES=$(wildcard $(SRCDIR)/*.c)
-TESTSOURCES=$(SOURCES) $(wildcard $(TESTRCDIR)/*.c)
+CFLAGS = $(STANDARD_FLAGS) $(OPTIMIZATION_FLAGS) $(WARNING_FLAGS) $(INCLUDE_FLAGS) $(SDL2_CFLAGS)
 
-build:
-	$(MKDIR) $(BINDIR)
-	$(CC) $(SOURCES) $(CFLAGS) -o $(BINPATH)
+SRCS = $(wildcard src/*.c)
+OBJS = $(SRCS:.c=.o)
+TARGET = ginec
 
-build-debug:
-	$(MKDIR) $(BINDIR)
-	$(CC) $(SOURCES) $(DEBUGCFLAGS) -o $(DEBUGBINPATH)
+TEST_VM_SRCS = src/vm.c
+TEST_VM_OBJS = $(TEST_VM_SRCS:.c=.o)
+TEST_SRCS = $(wildcard test/test_*.c)
+TEST_BINS = $(TEST_SRCS:.c=)
 
-build-test:
-	$(MKDIR) $(BINDIR)
-	$(CC) $(TESTSOURCES) $(TESTCFLAGS) -o $(TESTBINPATH)
+.PHONY: all clean run test
 
-run:
-	$(BINPATH)
+all: $(TARGET)
 
-run-test:
-	$(TESTBINPATH)
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LDFLAGS) $(SDL2_LDFLAGS)
 
-clear:
-	$(RM) $(BINDIR)
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-install:
-	$(INSTALL) $(BINPATH) $(INSTALLPATH)
+test/test_%: test/test_%.c $(TEST_VM_OBJS)
+	$(CC) $(CFLAGS) $< $(TEST_VM_OBJS) -o $@
 
-uninstall:
-	$(RM) $(INSTALLPATH)/$(BINNAME)
+test: $(TEST_BINS)
+	@printf "\n========================================\n"
+	@printf "Running all tests..."
+	@printf "\n=========================================\n"
+	@failed=0; \
+	for test_bin in $(TEST_BINS); do \
+		./$$test_bin || failed=$$((failed + 1)); \
+	done; \
+	if [ $$failed -eq 0 ]; then \
+		printf "\n$(COLOR_GREEN)All test suites passed!$(COLOR_RESET)\n"; \
+		exit 0; \
+	else \
+		printf "\n$(COLOR_RED)$$failed test suite(s) failed!$(COLOR_RESET)\n"; \
+		exit 1; \
+	fi
+
+clean:
+	rm -f $(OBJS) $(TARGET)
+	rm -f $(TEST_VM_OBJS) $(TEST_BINS)
+	rm -f game.roma game.romb
+
+run: $(TARGET)
+	./$(TARGET)
+
+fmt:
+	clang-format -i $(SRCS) $(wildcard include/*.h)
+
+
+example/%: 
+	cd asm && python gac.py examples/$*.asm ../game.roma ../game.romb
+
+hooks:
+	git config core.hooksPath hooks
+

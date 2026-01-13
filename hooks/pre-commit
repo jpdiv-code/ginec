@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+
+CF="${CLANG_FORMAT:-clang-format}"
+
+command -v "$CF" >/dev/null 2>&1 || {
+echo "ERROR: clang-format not found. Install LLVM/clang-format and ensure it is in PATH." >&2
+exit 1
+}
+
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(c|h)$' || true)
+
+[ -z "$FILES" ] && exit 0
+
+echo "$FILES" | while IFS= read -r f; do
+  [ -f "$f" ] || continue
+"$CF" -i "$f"
+git add "$f"
+done
+
